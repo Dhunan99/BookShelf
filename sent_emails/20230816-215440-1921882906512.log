@@ -1,0 +1,21 @@
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: [Demo Google] Password Reset E-mail
+From: webmaster@localhost
+To: midhun2017@gmail.com
+Date: Wed, 16 Aug 2023 16:24:40 -0000
+Message-ID: <169220308070.17848.14712216139124923786@Zen>
+
+Hello from Demo Google!
+
+You're receiving this e-mail because you or someone else has requested a password for your user account.
+It can be safely ignored if you did not request a password reset. Click the link below to reset your password.
+
+http://127.0.0.1:8000/accounts/password/reset/key/5-bt1ov4-66e3f698ca0a366ef0b8ec72eb04c505/
+
+In case you forgot, your username is dhunan.
+
+Thank you for using Demo Google!
+domain.com
+-------------------------------------------------------------------------------

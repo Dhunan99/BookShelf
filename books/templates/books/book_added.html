@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Added</title>
+</head>
+<body>
+    <nav style="float:right;">
+        <li><a href="/accounts/logout">logout</a></li>
+        {% if user.is_superuser %}
+        <li><a href="/books/book_list">Books</a></li>
+        {% endif %}
+    </nav>
+    <h1>Book Added Successfully!</h1>
+    <p>The book has been added to the database.</p>
+</body>
+</html>

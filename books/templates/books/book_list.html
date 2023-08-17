@@ -1,0 +1,39 @@
+<style>
+  .book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.book-card {
+  border: 1px solid #ccc;
+  padding: 10px;
+
+}
+.book-cover {
+  max-width: 200px; /* Adjust the maximum width as needed */
+  max-height: 300px; /* Adjust the maximum height as needed */
+  width: auto;
+  height: auto;
+  object-fit: contain; /* Maintain aspect ratio and fit within the defined dimensions */
+}
+li{list-style-type: none}
+</style>
+<nav style="float:right;">
+    <li><a href="/accounts/logout">logout</a></li>
+    {% if user.is_superuser %}
+    <li><a href="/books/add_book">Add_Book</a></li>
+    {% endif %}
+</nav>
+<div class="book-grid">
+    {% for book in books %}
+      <div class="book-card">
+        <img src="{{ book.cover_image.url }}" alt="{{ book.Title }} Cover" class="book-cover">
+        <h2>{{ book.Title }}</h2>
+        <p>Author: {{ book.AuthorID }}</p>
+        <p>Publication Date: {{ book.PublicationDate }}</p>
+        <p>Price: {{ book.Price }}</p>
+        {% if user.is_superuser %}<a href="{% url 'delete_book' book.pk %}" class="delete-button">Delete</a>{% endif %}
+      </div>
+    {% endfor %}
+</div>

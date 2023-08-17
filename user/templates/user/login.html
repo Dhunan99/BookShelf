@@ -1,0 +1,188 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Login{% endblock title %}</title>
+    <link rel="canonical" href="https://picocss.com/examples/sign-in/" />
+
+    <!-- Pico.css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+
+    <!-- Custom styles for this example -->
+    <link rel="stylesheet" href={% static 'css/custom.css' %} />
+  </head>
+{% block script %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const usernameInput = document.querySelector('#id_username');
+      const passwordInput = document.querySelector('#id_password');
+
+      const usernameError = document.querySelector('#username-error');
+      const passwordError = document.querySelector('#password-error');
+      const submitButton = document.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      usernameInput.addEventListener('input', validateUsername);
+      passwordInput.addEventListener('input', validatePassword);
+      function validateUsername() {
+          const username = usernameInput.value;
+          if (username.length < 5) {
+              usernameError.textContent = 'Username must be at least 5 characters.';
+          } else if (!/^[a-zA-Z0-9]+$/.test(username)) {
+              usernameError.textContent = 'Username can only contain letters and numbers.';
+          } else {
+              usernameError.textContent = '';
+          }
+          checkAndEnableSubmitButton();
+      }
+
+    function validatePassword() {
+        const password = passwordInput.value;
+        if (password.length < 8) {
+            passwordError.textContent = 'Password must be at least 8 characters.';
+        } else {
+            passwordError.textContent = '';
+        }
+        checkAndEnableSubmitButton();
+    }
+
+function checkAndEnableSubmitButton() {
+        const errorMessages = [
+            usernameError.textContent,
+            passwordError.textContent,
+        ];
+
+        if (errorMessages.some(message => message !== '')) {
+            submitButton.disabled = true;
+        } else {
+            submitButton.disabled = false;
+        }
+    }
+  });
+  </script>
+  {% endblock script%}
+  <style>
+ .gi{ 
+      width:16%;
+      {% comment %} display: inline-block; {% endcomment %}
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer; 
+      box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.25);
+      transition: background-color 0.4s;
+    }
+    
+    .gi:hover {
+      background-color: #2659c0;
+    }
+    .error-message{
+      color:#fc4903;
+    }
+  </style>
+  <body>
+    <!-- Nav -->
+    <nav class="container-fluid">
+      <ul>
+        <li>
+          <a href="./" class="contrast" onclick="event.preventDefault()"><strong>BookShelf</strong></a>
+        </li>
+      </ul>
+      <ul>
+        <li>
+          <details role="list" dir="rtl">
+            <summary aria-haspopup="listbox" role="link" class="secondary">Theme</summary>
+            <ul role="listbox">
+              <li><a href="#" data-theme-switcher="auto">Auto</a></li>
+              <li><a href="#" data-theme-switcher="light">Light</a></li>
+              <li><a href="#" data-theme-switcher="dark">Dark</a></li>
+            </ul>
+          </details>
+          
+        </li>
+        <li>
+          <details role="list" dir="rtl">
+            <summary aria-haspopup="listbox" role="link" class="secondary">User</summary>
+            <ul role="listbox">
+              <li><a href="/user/login" >Login</a></li>
+              <li><a href="/user/register" >Register</a></li>
+            </ul>
+          </details>
+        </li>
+    </nav>
+    <!-- ./ Nav -->
+
+    <!-- Main -->
+    <main class="container">
+      <article class="grid">
+        <div>
+          {% block content %}
+          <hgroup>
+            <h1>Log in</h1>
+            <h2>To Enter the Enchanted Library: Unveil the Secrets Within, To Begin Your Odyssey!</h2>
+          </hgroup>
+          <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <input
+              id="id_username"
+              type="text"
+              name="username"
+              placeholder="Login"
+              aria-label="Login"
+              autocomplete="nickname"
+              required
+            />
+            <p class="error-message" id="username-error">
+              {{ error }}
+            </p>
+            <input
+              id="id_password"
+              type="password"
+              name="password"
+              placeholder="Password"
+              aria-label="Password"
+              autocomplete="current-password"
+              required
+            />
+            <p class="error-message" id="password-error">
+            </p>
+            <fieldset>
+              {% comment %} <label for="remember" id="lef">
+                <input type="checkbox" role="switch" id="remember" name="remember" />
+                Remember me
+              </label> {% endcomment %}
+              <label for="forgotpass" id="lef">
+                <a href="/user/reset">Forgot Password</a>
+              </label>
+              <a href="/user/register" id="righ">Not registered? Register here</a>
+            </fieldset>
+            <button type="submit" class="contrast">Login</button>
+          </form>
+          <a href="/accounts/google/login/?process=login">
+            <img class="gi"  src={% static 'img/Google__G__Logo.svg' %}>
+          </a>
+          <a href="#">
+            <img class="gi" src={% static 'img/WhatsApp.svg' %}/>
+          </a>
+          <a href="#">
+            <img class="gi" src={% static 'img/fb.svg ' %}/>
+          </a>
+        </div>
+        <div></div>
+        {% endblock %}
+      </article>
+    </main>
+    <!-- ./ Main -->
+
+    <!-- Footer -->
+    {% comment %} <footer class="container-fluid">
+      
+    </footer>
+    <!-- ./ Footer --> {% endcomment %}
+
+    <!-- Minimal theme switcher -->
+    <script src={% static 'js/theme.js' %}></script>
+  </body>
+</html>
