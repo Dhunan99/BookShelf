@@ -7,8 +7,28 @@
     <h1>Add a Book</h1>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Add Book</button>
+        {{ form.title.label_tag }} {{ form.title }}<br>
+        {{ form.author_name.label_tag }} {{ form.author_name }}<br>
+        {{ form.language_name.label_tag }} {{ form.language_name }}<br>
+        {{ form.isbn.label_tag }} {{ form.isbn }}<br>
+        {{ form.Publication_Year.label_tag }} {{ form.Publication_Year }}<br>
+        
+        <!-- Render categories as checkboxes -->
+        {{ form.categories.label_tag }}
+    <div class="checkbox-list">
+        {% for category in categories %}
+            <label for="id_categories_{{ category.id }}">
+                <input type="checkbox" name="categories" value="{{ category.id }}" id="id_categories_{{ category.id }}">
+                {{ category.name }}
+            </label><br>
+        {% endfor %}
+    </div>
+        
+        {{ form.description.label_tag }} {{ form.description }}<br>
+        {{ form.price.label_tag }} {{ form.price }}<br>
+        {{ form.cover_image.label_tag }} {{ form.cover_image }}<br>
+        
+        <button type="submit">Submit</button>
     </form>
 </body>
 </html>

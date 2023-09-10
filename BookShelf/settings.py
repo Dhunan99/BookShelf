@@ -30,8 +30,23 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
+ADMIN_SITE_HEADER = "ADMIN SITE"
+ADMIN_SITE_TITLE = "ADMIN"
 
+# Set the login URL for Jazzmin
+LOGIN_URL = "admin:login"
+
+# Optionally, you can customize the Jazzmin theme
+JAZZMIN_SETTINGS = {
+    "show_ui_builder": True,
+    "theme": "dark",
+    "topmenu_links": [
+        {"name": "Home", "url": "admin:index", "new_window": False},
+        {"name": "My Site", "url": "/", "new_window": False},
+    ],
+}
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

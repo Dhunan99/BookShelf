@@ -23,15 +23,35 @@ Registration
       emailInput.addEventListener('input', validateEmail);
       password1Input.addEventListener('input', validatePassword1);
       password2Input.addEventListener('input', validatePassword2);
-
+      
+       function live_valid(username) {
+        const validationMessage = document.getElementById('username-error');
+        fetch(`/user/validate-username/?username=${username}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_taken) {
+                    validationMessage.style.color='red';
+                    validationMessage.textContent = 'Username is already taken.';
+                    submitButton.disabled = true;
+                    
+                } else {
+                  validationMessage.style.color='green';
+                    validationMessage.textContent = 'Username is available.';
+                }
+            });
+    }
       function validateUsername() {
           const username = usernameInput.value;
           if (username.length < 5) {
+              usernameError.style.color='#ffcccb';
               usernameError.textContent = 'Username must be at least 5 characters.';
           } else if (!/^[a-zA-Z0-9]+$/.test(username)) {
+            usernameError.style.color='#ffcccb';
               usernameError.textContent = 'Username can only contain letters and numbers.';
           } else {
               usernameError.textContent = '';
+              live_valid(username);
+
           }
           checkAndEnableSubmitButton();
       }
@@ -53,6 +73,7 @@ Registration
             password1Error.textContent = 'Password must be at least 8 characters.';
         } else {
             password1Error.textContent = '';
+            validatePassword2();
         }
         checkAndEnableSubmitButton();
     }
@@ -68,13 +89,16 @@ Registration
         checkAndEnableSubmitButton();
     }
 function checkAndEnableSubmitButton() {
+        usr=usernameError.textContent;
+        if (usernameError.textContent == "Username is available."){
+          usr='';
+        }
         const errorMessages = [
-            usernameError.textContent,
+            usr,
             emailError.textContent,
             password1Error.textContent,
             password2Error.textContent
         ];
-
         if (errorMessages.some(message => message !== '')) {
             submitButton.disabled = true;
         } else {

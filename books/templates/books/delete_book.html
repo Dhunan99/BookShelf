@@ -1,7 +1,30 @@
-<h2>Confirm Deletion</h2>
-    <p>Are you sure you want to delete the book "{{ book.Title }}"?</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Delete</button>
-        <a href={% url '/books/book_list' %}>Cancel</a>
-    </form>
+{% extends "user/home.html" %}
+
+{% block style %}
+<style>.min-height-300 {
+    min-height: 400px;}</style>
+
+{% endblock style %}
+{% block content %}
+<div class="container mt-5 min-height-300"> <!-- Add mt-4 class for top margin -->
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h2 class="mb-0">Confirm Deletion</h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Are you sure you want to delete the book "{{ book.Title }}"?</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-danger mr-2">Delete</button>
+                            <a href="{% url 'book_list' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

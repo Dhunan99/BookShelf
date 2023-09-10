@@ -1,39 +1,406 @@
+{% extends "user/home.html" %}
+{% block style %}
 <style>
-  .book-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-}
+  /* Custom styles for smaller cards */
+  .card {
+    max-width: 600px;
+    background-color: #1a1a1a;
+    color: #fff;
+  }
 
-.book-card {
-  border: 1px solid #ccc;
+  .card-body {
+    display: flex;
+    align-items: center;
+  }
+
+  .book-cover {
+    max-width: 200px;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    margin-right: 20px;
+  }
+
+  /* Category selection bar styles */
+  .category-bar {
+    background-color: #333;
+    color: #fff;
+    border-radius: 0 0 25px 25px;
+  }
+
+  .category-item {
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: background-color 0.3s, color 0.3s; /* Add color transition */
+  }
+  
+  .category-item:hover {
+    background-color: #555;
+    color: #fff; /* Change text color on hover */
+  }
+
+  /* Hide "Categories" label in the collapsed Navbar */
+  @media (max-width: 767px) {
+    {% comment %} .hide-label {
+      display: none;
+    } {% endcomment %}
+  }
+.nav-item {
+    list-style-type: none;
+    padding-left: 0; /* Remove default left padding */
+  }
+a.nav-link.category-item.hide-label:hover::before {
+    transform: scaleX(0);
+}
+a.nav-link.category-item {
+  color:#f2f1f1;
+}
+.search-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   padding: 10px;
+}
 
+.search-wrapper {
+  display: flex;
+  align-items: center;
 }
-.book-cover {
-  max-width: 200px; /* Adjust the maximum width as needed */
-  max-height: 300px; /* Adjust the maximum height as needed */
-  width: auto;
-  height: auto;
-  object-fit: contain; /* Maintain aspect ratio and fit within the defined dimensions */
+
+.search-bar {
+  width: 0;
+  height: 40px;
+  border: none;
+  background-color: transparent;
+  color: #fff; /* Light text color */
+  transition: width 0.3s;
 }
-li{list-style-type: none}
+
+.search-wrapper.active .search-bar {
+  width: 300px; /* Adjust the width as needed */
+  outline: none;
+}
+
+.search-icon {
+  cursor: pointer;
+  margin-right: 10px;
+  font-size: 24px;
+  color: #fff; /* Light text color */
+}
+/* Style for the contents within the search-results container */
+/* Style for the search results container */
+.search-container {
+  display: flex;
+  flex-direction: column; /* Display contents in a column layout */
+  align-items: flex-end;
+  padding: 10px;
+}
+
+/* Style for the search results */
+/* Style for the search results container */
+.search-results {
+  position: absolute;
+  top: 100%; /* Position it below the search bar */
+  right: 0; /* Position it to the right of the search bar */
+  width: 357px; /* Adjust the width as needed */
+  max-height: 300px; /* Set a maximum height for the results container */
+  overflow-y: auto; /* Add a scrollbar if needed */
+  background-color: #343a40; /* Dark background color */
+  border: 1px solid #555; /* Darker border color */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000; /* Adjust z-index as needed */
+  display: none; /* Hide by default */
+}
+
+/* Style for individual search results */
+.search-results ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.search-results li {
+  padding: 10px; /* Darker border color for result items */
+  cursor: pointer;
+  color: #fff; /* Light text color */
+}
+
+.search-results li a {
+  color: #fff; /* Light text color */
+}
+div.search-results-item:hover{
+  background-color: #454d54; /* Slightly darker background color on hover */
+}
+  /* Pagination styling for dark theme */
+  .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      margin-bottom: 20px;
+  }
+  img.search-results-cover{
+    max-width:12%;
+    max-height:12%;
+  }
+
+  .step-links {
+      display: flex;
+  }
+
+  .step-links a {
+      padding: 5px 10px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 3px;
+      text-decoration: none;
+      color: #fff; /* Light text color */
+      background-color: #333; /* Dark background color */
+      transition: background-color 0.3s, color 0.3s;
+  }
+
+  .step-links a:hover {
+      background-color: #555; /* Slightly darker background color on hover */
+      color: #fff; /* Light text color on hover */
+  }
+
+  .current-page {
+      padding: 5px 10px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 3px;
+      background-color: #fff; /* Light background color */
+      color: #333; /* Dark text color */
+  }
+  /* Style for the links in search results */
+  /* Style for the links in search results */
+  .search-results-link {
+    color: #17a2b8; /* Blueish color for links in dark theme */
+    text-decoration: none; /* Remove underlines */
+    transition: color 0.3s; /* Add a smooth color transition */
+    font-weight: bold; /* Make the text bold */
+    font-size: 15px; /* Reduced font size */
+    padding-left:3px;
+  }
+  
+  /* Change link color on hover */
+  .search-results-link:hover {
+    color: #138496; /* Darker color on hover */
+  }
+  
+  /* Add an underline on active/focused links */
+  .search-results-link:focus,
+  .search-results-link:active {
+    text-decoration: underline;
+  }
+  
+  /* Style for visited links */
+  .search-results-link:visited {
+    color: #8a63e7; /* Visited link color */
+  }
+  
+
+
 </style>
-<nav style="float:right;">
-    <li><a href="/accounts/logout">logout</a></li>
-    {% if user.is_superuser %}
-    <li><a href="/books/add_book">Add_Book</a></li>
-    {% endif %}
+
+</style>
+
+</style>
+
+
+
+</style>
+
+{% endblock style %}
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+<script>
+  $(document).ready(function() {
+    const searchIcon = $('#search-icon');
+    const searchWrapper = $('.search-wrapper');
+    const searchBar = $('#search-bar');
+    const searchResults = $('#search-results');
+  
+    searchIcon.on('click', function() {
+      searchWrapper.toggleClass('active');
+      searchBar.focus();
+    });
+  
+    searchBar.on('input', function() {
+      const query = searchBar.val();
+      if (query.length >= 3) {
+        fetch(`/books/search/?query=${query}`)
+          .then(response => response.json())
+          .then(data => {
+            displaySearchResults(data);
+          });
+      } else {
+        searchResults.empty();
+        searchResults.hide(); // Hide the results container when there's no query
+      }
+    });
+    function clearSearch() {
+      searchBar.val('');
+      searchResults.empty().hide();
+    }
+    $(document).on('click', function(event) {
+      if (!searchWrapper.is(event.target) && searchWrapper.has(event.target).length === 0) {
+        // Click occurred outside of the search bar and search results
+        clearSearch();
+      }
+    });
+  
+    function displaySearchResults(results) {
+      const searchResults = $('#search-results');
+    
+      // Clear previous search results
+      searchResults.empty();
+    
+      if (results.length === 0) {
+        searchResults.hide(); // Hide the results container if there are no results
+      } else {
+        // Create a container div for the results
+        const container = $('<div class="search-results-container"></div>');
+    
+        results.forEach(function (result) {
+          // Create a div for each result item
+          const item = $('<div class="search-results-item"></div>');
+    
+          // Create an image element for the book cover
+          const truncatedTitle = result.title.length > 37 ? result.title.substring(0, 34) + '...' : result.title;
+          const coverImage = $('<img>', {
+            src: result.cover_url, // Replace with the URL of the book cover image
+            alt: truncatedTitle + ' Cover',
+            class: 'search-results-cover',
+          });
+    
+          // Create a link to the book details page
+          const link = $('<a>', {
+            href: `/books/book/${result.id}/`, // Adjust the URL to display the book details
+            text: truncatedTitle,
+            class: 'search-results-link',
+          });
+    
+          // Append the cover image and link to the result item
+          item.append(coverImage, link);
+    
+          // Append the result item to the container
+          container.append(item);
+        });
+    
+        // Append the container to the search results container
+        searchResults.append(container);
+    
+        // Show the results container when there are results
+        searchResults.show();
+      }
+    }
+    
+    
+  });
+  
+</script>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <!-- Category selection bar -->
+      <!-- Category selection bar -->
+<!-- Category selection bar -->
+<nav class="navbar navbar-expand-lg navbar-dark category-bar">
+  <div class="container justify-content-center"> <!-- Add justify-content-center class here -->
+    <a class="navbar-brand" href="{% url 'book_list' %}">All Categories</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ml-auto">
+        {% for category in categories|dictsort:"name"|slice:7 %}
+        <li class="nav-item" >
+          <a class="nav-link category-item hide-label" href="/books/book_list/{{category.name}}">{{ category.name }}</a>
+        </li>
+        {% endfor %}
+        <button class="btn btn-link btn-sm" type="button" data-toggle="collapse" data-target="#allCategories" aria-expanded="false" aria-controls="allCategories">
+          <spa class="navbar-toggler-icon"></spa>
+        </button>
+        
+        <!-- Add more category items here -->
+      </ul>
+      
+      <!-- Add a collapse button for all categories -->
+    </div>
+    
+  </div>
 </nav>
-<div class="book-grid">
+<div class="search-container">
+  <div class="search-wrapper">
+    <input type="text" class="search-bar" id="search-bar" placeholder="Search..." autocomplete="off">
+    <i class="fas fa-search search-icon" id="search-icon"></i>
+  </div>
+  <div class="search-results" id="search-results"></div>
+</div>
+
+
+
+
+
+
+<div class="collapse" id="allCategories">
+  <ul class="row">
+    {% for category in categories|dictsort:"name" %}
+    {% if forloop.counter > 7 %}
+    <div class="col-md-3 mb-3"> <!-- Adjust the column width as needed -->
+      <li class="nav-item">
+        <a class="nav-link category-item" href="/books/book_list/{{category.name}}">{{ category.name }}</a>
+      </li>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </ul>
+</div>
+
+
+
+    </div>
+  </div>
+  <div class="row" style="min-height:293px;">
     {% for book in books %}
-      <div class="book-card">
-        <img src="{{ book.cover_image.url }}" alt="{{ book.Title }} Cover" class="book-cover">
-        <h2>{{ book.Title }}</h2>
-        <p>Author: {{ book.AuthorID }}</p>
-        <p>Publication Date: {{ book.PublicationDate }}</p>
-        <p>Price: {{ book.Price }}</p>
-        {% if user.is_superuser %}<a href="{% url 'delete_book' book.pk %}" class="delete-button">Delete</a>{% endif %}
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-body">
+            <img src="{{ book.cover_image.url }}" alt="{{ book.Title }} Cover" class="book-cover">
+            <div>
+              <h5 class="card-title">{{ book.Title }}</h5>
+              <p><strong>Author:</strong> {{ book.Author.AuthorName }}</p>
+              <p><strong>Language:</strong> {{ book.LanguageID.LanguageName }}</p>
+              <p><strong>Categories:</strong> 
+                {% for category in book.Categories.all %}
+                  {{ category.name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </p>
+              <p><strong>Price:</strong> {{ book.Price }}</p>
+              <a href="{% url 'book_detail' book_id=book.BookID %}" class="btn btn-success btn-sm">View Details</a>
+              {% if user.is_superuser %}
+                <a href="{% url 'delete_book' book.pk %}" class="btn btn-danger btn-sm">Delete</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
       </div>
     {% endfor %}
+  </div>
+  <div class="pagination">
+    <span class="step-links">
+        {% if books.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ books.previous_page_number }}">previous</a>
+        {% endif %}
+        
+        <span class="current-page">{{ books.number }}</span>
+        
+        {% if books.has_next %}
+            <a href="?page={{ books.next_page_number }}">next</a>
+            <a href="?page={{ books.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
 </div>
+</div>
+{% endblock content %}

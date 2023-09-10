@@ -1,0 +1,646 @@
+{% extends "user/home.html" %}
+{% block style %}
+<style>
+  .search-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 10px;
+  }
+  
+  .search-wrapper {
+    display: flex;
+    align-items: center;
+  }
+  
+  .search-bar {
+    width: 0;
+    height: 40px;
+    border: none;
+    background-color: transparent;
+    color: #fff; /* Light text color */
+    transition: width 0.3s;
+  }
+  
+  .search-wrapper.active .search-bar {
+    width: 300px; /* Adjust the width as needed */
+    outline: none;
+  }
+  
+  .search-icon {
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 24px;
+    color: #fff; /* Light text color */
+  }
+  /* Style for the contents within the search-results container */
+  /* Style for the search results container */
+  .search-container {
+    display: flex;
+    flex-direction: column; /* Display contents in a column layout */
+    align-items: flex-end;
+    padding: 10px;
+  }
+  
+  /* Style for the search results container */
+.search-results {
+  position: absolute;
+  top:180px;
+  width: 357px;
+  right: 30px;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: #343a40;
+  border: 1px solid #555;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  display: none;
+  /* Change the following properties to position the container below */
+  bottom: -1px; /* Push it 1px above the search bar */
+}
+.search-results {
+  top: calc(25% + 10px); /* Position it 10px below the search bar */
+}
+
+  
+  /* Style for individual search results */
+  .search-results ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .search-results li {
+    padding: 10px; /* Darker border color for result items */
+    cursor: pointer;
+    color: #fff; /* Light text color */
+  }
+  
+  .search-results li a {
+    color: #fff; /* Light text color */
+  }
+  div.search-results-item:hover{
+    background-color: #454d54; /* Slightly darker background color on hover */
+  }
+  .search-results-link {
+    color: #17a2b8; /* Blueish color for links in dark theme */
+    text-decoration: none; /* Remove underlines */
+    transition: color 0.3s; /* Add a smooth color transition */
+    font-weight: bold; /* Make the text bold */
+    font-size: 15px; /* Reduced font size */
+    padding-left:3px;
+  }
+  
+  /* Change link color on hover */
+  .search-results-link:hover {
+    color: #138496; /* Darker color on hover */
+  }
+  
+  /* Add an underline on active/focused links */
+  .search-results-link:focus,
+  .search-results-link:active {
+    text-decoration: underline;
+  }
+  
+  /* Style for visited links */
+  .search-results-link:visited {
+    color: #8a63e7; /* Visited link color */
+  }
+/* Dark theme styles */
+body {
+    background-color: #1a1a1a;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 85%;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.book-details {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.book-cover {
+    max-width: 200px;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    margin-right: 20px;
+}
+
+.book-title {
+  font-size: 24px; /* Increase font size */
+  margin-bottom: 20px;
+  color: #fff; /* White text color */
+  text-shadow: 2px 2px 4px #0000FF;
+  color: white;
+  padding-bottom:20px;
+}
+
+.book-info {
+    flex-grow: 1;
+}
+.left-column {
+  padding: 10px;  
+  margin-top:50px;
+  margin-bottom:50px;
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 1); /* White shadow */
+}
+.left-column hr {
+  border: 1px solid ; /* Set the border color to white */
+}
+.half-width-img {
+  max-width: 50%;
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.6); /* White shadow */
+}
+img.search-results-cover{
+  max-width:12%;
+  max-height:12%;
+}
+div#search-results.search-results{
+  max-height:66px
+}
+@media (max-width: 768px) {
+  .search-results {
+    top: calc(58% + 10px); 
+  }
+}
+/* Add more styles as needed */
+/* Star rating styles */
+.rating {
+  display: inline-block;
+  user-select: none;
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  flex-direction: row-reverse;
+}
+
+.rating input {
+  display: none;
+}
+
+.rating label {
+  position: relative;
+  cursor: pointer;
+}
+
+.rating label:before {
+  content: "\2605"; /* Unicode character for a star */
+  font-size: 24px;
+  color: #ddd; /* Inactive star color */
+  margin-right: 5px;
+}
+
+/* Style the stars when they are checked (selected) */
+.rating input:checked ~ label:before {
+  color: #ffcc00; /* Active star color (e.g., yellow) */
+}
+
+/* Optional: Add hover effect for the stars */
+.rating label:hover:before {
+  color: #ffcc00; /* Hover star color */
+}
+
+/* Optional: Style the overall rating text */
+.rating-text {
+  font-size: 18px;
+  margin-top: 10px;
+  color: #333;
+  font-weight: bold;
+}
+/* Custom CSS for Ratings and Reviews section */
+
+/* Section Title */
+.section-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* Rating Items */
+.rating-item {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.rating-item h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+/* Rating Stars (Example styles; customize as needed) */
+.rating-stars {
+  font-size: 24px;
+  color: #f0d000; /* Yellow color for stars */
+  
+}
+
+/* Overall Rating */
+.overall-rating {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.overall-rating h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+/* Overall Rating Stars (Example styles; customize as needed) */
+.overall-stars {
+  font-size: 36px;
+  color: #f0d000; /* Yellow color for stars */
+}
+
+/* Review Section */
+.review-section {
+  margin-top: 30px;
+}
+
+/* Form for Writing a Review (Example styles; customize as needed) */
+form {
+  background-color: #f8f8f8; /* Light gray background for the form */
+  padding: 20px;
+  border-radius: 5px;
+}
+
+/* Reduce font size for form elements */
+form input,
+form textarea {
+  font-size: 14px;
+}
+.activelab{
+  color: #ffcc00;
+}
+:root {
+  --star-size: 30px;
+  --star-color: #fff;
+  --star-background: #fc0;
+}
+
+.Steaks {
+  --percent: calc(var(--rating) / 5 * 100%);
+  
+  display: inline-block;
+  font-size: var(--star-size);
+  font-family: Times; // make sure ★ appears correctly
+  line-height: 1;
+  
+  &::before {
+    content: '★★★★★';
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, var(--star-background) var(--percent), var(--star-color) var(--percent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+form{
+  color:black;
+}
+/* Add more CSS styles as needed */
+
+</style>
+{% endblock style %}
+{% block content %}
+<script>
+  $(document).ready(function() {
+    const searchIcon = $('#search-icon');
+    const searchWrapper = $('.search-wrapper');
+    const searchBar = $('#search-bar');
+    const searchResults = $('#search-results');
+  
+    searchIcon.on('click', function() {
+      searchWrapper.toggleClass('active');
+      searchBar.focus();
+    });
+  
+    searchBar.on('input', function() {
+      const query = searchBar.val();
+      if (query.length >= 3) {
+        fetch(`/books/search/?query=${query}&limit=1`)
+          .then(response => response.json())
+          .then(data => {
+            displaySearchResults(data);
+          });
+      } else {
+        searchResults.empty();
+        searchResults.hide(); // Hide the results container when there's no query
+      }
+    });
+    function clearSearch() {
+      searchBar.val('');
+      searchResults.empty().hide();
+    }
+    $(document).on('click', function(event) {
+      if (!searchWrapper.is(event.target) && searchWrapper.has(event.target).length === 0) {
+        // Click occurred outside of the search bar and search results
+        clearSearch();
+      }
+    });
+  
+    function displaySearchResults(results) {
+      const searchResults = $('#search-results');
+    
+      // Clear previous search results
+      searchResults.empty();
+    
+      if (results.length === 0) {
+        searchResults.hide(); // Hide the results container if there are no results
+      } else {
+        // Create a container div for the results
+        const container = $('<div class="search-results-container"></div>');
+    
+        results.forEach(function (result) {
+          // Create a div for each result item
+          const item = $('<div class="search-results-item"></div>');
+    
+          // Create an image element for the book cover
+          const truncatedTitle = result.title.length > 37 ? result.title.substring(0, 34) + '...' : result.title;
+          const coverImage = $('<img>', {
+            src: result.cover_url, // Replace with the URL of the book cover image
+            alt: truncatedTitle + ' Cover',
+            class: 'search-results-cover',
+          });
+    
+          // Create a link to the book details page
+          const link = $('<a>', {
+            href: `/books/book/${result.id}/`, // Adjust the URL to display the book details
+            text: truncatedTitle,
+            class: 'search-results-link',
+          });
+    
+          // Append the cover image and link to the result item
+          item.append(coverImage, link);
+    
+          // Append the result item to the container
+          container.append(item);
+        });
+    
+        // Append the container to the search results container
+        searchResults.append(container);
+        
+        const containerHeight = results.length * 66; // Adjust the height as needed
+
+    // Set the container height
+        
+
+        searchResults.show();
+      }
+    }
+    
+    
+  });
+  
+</script>
+<script>
+  function calculateAverageRating() {
+    // Get all the rating input elements
+    const ratingInputs = document.querySelectorAll('.rating input[type="radio"]');
+    
+    // Initialize variables to calculate the sum and count of checked ratings
+    let sum = 0;
+    let ratingValuesString = "";
+    let count = 0;
+  
+    // Iterate through each rating input
+    ratingInputs.forEach((input) => {
+      if (input.checked) {
+        // Parse the value of the checked input as a number
+        const ratingValue = parseFloat(input.value);
+  
+        // Add the rating value to the sum
+        sum += ratingValue;
+        ratingValuesString += ratingValue.toString() + " ";
+        // Increment the count
+        count++;
+      }
+    });
+  
+    // Calculate the average rating
+    const averageRating = count > 0 ? sum / count : 0;
+  
+    // Set the style attribute of the .Steaks span with the calculated average rating
+    const steaksSpan = document.querySelector('.Steaks');
+    steaksSpan.style.setProperty('--rating', averageRating.toFixed(1));
+    ratingValuesString +=averageRating.toFixed(1).toString();
+    var hiddenInput = document.querySelector('input[type="hidden"][name="Rating"]');
+    const overallRating = document.querySelector('#overall_rating');
+    if (hiddenInput) {
+      hiddenInput.value = ratingValuesString.trim();
+      overallRating.textContent=averageRating.toFixed(1);
+    }
+  }
+  function areAllCategoriesRated() {
+    const ratingCategories = document.querySelectorAll('.rating input[type="radio"]');
+    
+
+    const selectedCategories = new Set();
+  
+    ratingCategories.forEach((input) => {
+      if (input.checked) {
+        selectedCategories.add(input.name);
+      }
+    });
+    return selectedCategories.size === 4;
+  }
+  
+  // Event listener for rating inputs in each category
+  document.addEventListener('DOMContentLoaded', function() {
+    // Event listener for rating inputs in each category
+    document.querySelectorAll('.rating input[type="radio"]').forEach((input) => {
+      input.addEventListener('change', () => {
+        if (areAllCategoriesRated()) {
+          calculateAverageRating();
+        }
+      });
+    });
+  });
+  
+  // Call the function to calculate and update the average rating
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      const reviewForm = document.getElementById("reviewForm");
+      const ratingInput = document.querySelector('input[name="Rating"]');
+
+      reviewForm.addEventListener("submit", function (event) {
+          if (ratingInput.value === "") {
+              event.preventDefault(); // Prevent form submission
+              alert("Please give ratings before submitting the review.");
+          }
+      });
+  });
+</script>
+
+<div class="search-container" >
+  <div class="search-wrapper" >
+    <input type="text" class="search-bar" id="search-bar" placeholder="Search..." autocomplete="off">
+    <i class="fas fa-search search-icon" id="search-icon"></i>
+  </div>
+  <div class="search-results" id="search-results"></div>
+</div>
+<div class="container">
+  <div class="row justify-content-center">
+    <h1 class="book-title"> {{ book.Title }}</h1>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-4">
+      <div class="d-flex justify-content-center align-items-center shadow"> <!-- Centering container with shadow -->
+        <img src="{{ book.cover_image.url }}" alt="{{ book.Title }} Cover" class="img-fluid rounded book-cover border border-secondary half-width-img">
+      </div>      <div class="left-column">
+        <p><strong>Author:</strong> {{ book.Author.AuthorName }}</p>
+        <p><strong>Publication Year:</strong> {{ book.PublicationYear }}</p>
+        <p><strong>Categories:</strong> 
+          {% for category in book.Categories.all %}
+            {{ category.name }}{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        </p>
+        <p><strong>Language:</strong> {{ book.LanguageID.LanguageName }}</p>
+        <p><strong>Price:</strong> ${{ book.Price }}</p>
+        <p><strong>{{ book.get_identifier_type_display }}: </strong>{{ book.identifier_value }}</p>
+      </div>
+    </div>
+    <div class="col-md-8 col-custom-width text-white">
+      
+      <div class="card bg-dark border border-secondary mb-3">
+        <div class="card-header bg-secondary text-white">
+          Description
+        </div>
+        <div class="card-body">
+          {{ book.Description|linebreaksbr|safe }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <h2 class="section-title">Rating</h2>
+      <!-- Ratings -->
+      <div class="row">
+        <div class="col-md-3 rating-item">
+          <h3>Style</h3>
+          <div class="rating-stars">
+            <div class="rating">
+              <input type="radio" id="style-star1" name="style-rating" value="5" />
+              <label for="style-star1" title="5 star"></label>
+              <input type="radio" id="style-star2" name="style-rating" value="4" />
+              <label for="style-star2" title="4 stars"></label>
+              <input type="radio" id="style-star3" name="style-rating" value="3" />
+              <label for="style-star3" title="3 stars"></label>
+              <input type="radio" id="style-star4" name="style-rating" value="2" />
+              <label for="style-star4" title="2 stars"></label>
+              <input type="radio" id="style-star5" name="style-rating" value="1" />
+              <label for="style-star5" title="1 stars"></label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 rating-item">
+          <h3>Story</h3>
+          <div class="rating-stars">
+            <div class="rating">
+              <input type="radio" id="story-star5" name="story-rating" value="5" />
+              <label for="story-star5" title="5 stars"></label>
+              <input type="radio" id="story-star4" name="story-rating" value="4" />
+              <label for="story-star4" title="4 stars"></label>
+              <input type="radio" id="story-star3" name="story-rating" value="3" />
+              <label for="story-star3" title="3 stars"></label>
+              <input type="radio" id="story-star2" name="story-rating" value="2" />
+              <label for="story-star2" title="2 stars"></label>
+              <input type="radio" id="story-star1" name="story-rating" value="1" />
+              <label for="story-star1" title="1 star"></label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 rating-item">
+          <h3>Grammar</h3>
+          <div class="rating-stars">
+            <div class="rating">
+              <input type="radio" id="grammar-star5" name="grammar-rating" value="5" />
+              <label for="grammar-star5" title="5 stars"></label>
+              <input type="radio" id="grammar-star4" name="grammar-rating" value="4" />
+              <label for="grammar-star4" title="4 stars"></label>
+              <input type="radio" id="grammar-star3" name="grammar-rating" value="3" />
+              <label for="grammar-star3" title="3 stars"></label>
+              <input type="radio" id="grammar-star2" name="grammar-rating" value="2" />
+              <label for="grammar-star2" title="2 stars"></label>
+              <input type="radio" id="grammar-star1" name="grammar-rating" value="1" />
+              <label for="grammar-star1" title="1 star"></label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 rating-item">
+          <h3>Character</h3>
+          <div class="rating-stars">
+            <div class="rating">
+              <input type="radio" id="character-star5" name="character-rating" value="5" />
+              <label for="character-star5" title="5 stars"></label>
+              <input type="radio" id="character-star4" name="character-rating" value="4" />
+              <label for="character-star4" title="4 stars"></label>
+              <input type="radio" id="character-star3" name="character-rating" value="3" />
+              <label for="character-star3" title="3 stars"></label>
+              <input type="radio" id="character-star2" name="character-rating" value="2" />
+              <label for="character-star2" title="2 stars"></label>
+              <input type="radio" id="character-star1" name="character-rating" value="1" />
+              <label for="character-star1" title="1 star"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Overall Rating -->
+      <div class="row">
+        <div class="col-md-12 overall-rating">
+          <h3>Overall Rating</h3>
+          <div class="rating-stars overall-stars">
+            <div class="rating">
+              <span class="Steaks" style="--rating: 0;" aria-label="Rating of this product is 2.3 out of 5.">
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Review Section -->
+      <div class="row">
+    <div class="col-md-12">
+      <div class="row">
+        <div class="col-md-12">
+          <h2 class="section-title">Write a Review</h2>
+          <form method="POST" action="{% url 'add_review' book_id=book.BookID %}" id="reviewForm">
+            {% csrf_token %}
+            <input type="hidden" name="Rating" value="" required>
+            <input type="hidden" name="book_id" value="{{book.BookID}}">
+            <div class="form-group">
+              <label for="reviewTitle">Title</label>
+              <input type="text" class="form-control" name="title" id="reviewTitle" placeholder="Enter review title" required>
+            </div>
+            <div class="form-group">
+              <label for="reviewText">Review</label>
+              <textarea class="form-control" name="review" id="reviewText" rows="4" placeholder="Write your review here" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="#">Overall Rating: <span id="overall_rating"></span></label>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+
+
+
+{% endblock content %}

@@ -1,0 +1,497 @@
+{% extends 'user/home.html' %}
+{% load static %}   
+{% block style %}
+<script>
+    $(document).ready(function() {
+        $('#username-error-tooltip').tooltip({
+            hide: true
+        });
+        // Function to toggle the edit mode
+        function toggleEdit(formId, editButton, saveButton, cancelButton) {
+            const form = $(`#${formId}`);
+            const userEditableInputs = form.find('input:not([type="hidden"]), select, textarea');
+            const editBtn = $(editButton);
+            const saveBtn = $(saveButton);
+            const cancelBtn = $(cancelButton);
+
+            userEditableInputs.prop('disabled', function(i, val) {
+                return !val;
+            });
+
+            editBtn.toggle();
+            saveBtn.toggle();
+            cancelBtn.toggleClass('invisible');
+        }
+
+        // Add click event listeners to the edit buttons for each section
+        $('.edit-button').click(function() {
+            const sectionId = $(this).closest('.tab-pane').attr('id');
+            toggleEdit(`${sectionId}-form`, `#${sectionId} .edit-button`, `#${sectionId} .save-button`, `#${sectionId} .cancel-button`);
+        });
+
+        // Add click event listeners to the cancel buttons for each section
+        $('.cancel-button').click(function() {
+            const sectionId = $(this).closest('.tab-pane').attr('id');
+            toggleEdit(`${sectionId}-form`, `#${sectionId} .edit-button`, `#${sectionId} .save-button`, `#${sectionId} .cancel-button`);
+        });
+    });
+    
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const usernameInput = document.getElementById('username');
+        user_val=usernameInput.value;
+        const tooltip = document.getElementById('username-error-tooltip');
+        const form = document.getElementById('user-info-form');
+        const validationMessage = document.getElementById('live-valid');
+    
+        // Store a reference to the event listener function
+        let preventFormSubmission = function (event) {
+            event.preventDefault(); // Prevent form submission
+        };
+
+        function checkAndEnableSubmitButton() {
+            usr=validationMessage.textContent;
+            if (tooltip.style.display == 'none'){
+                tp="";
+            }
+            else{
+                tp="NO";
+            }
+            const errorMessages = [
+                usr,
+                tp
+            ];
+            if (errorMessages.some(message => message !== '')) {
+                form.addEventListener('submit', preventFormSubmission);
+            } else {
+                form.removeEventListener('submit', preventFormSubmission);
+            }
+        }
+
+        function live_valid(username) {
+            fetch(`/user/validate-username/?username=${username}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.is_taken && user_val!=username) {
+                        validationMessage.style.color = 'red';
+                        validationMessage.textContent = 'Username is already taken.';
+                        checkAndEnableSubmitButton();
+                    } else {
+                        validationMessage.style.color = 'green';
+                        validationMessage.textContent = '';
+                        checkAndEnableSubmitButton();
+                    }
+                });
+        }
+        // Add an event listener to the input field
+        usernameInput.addEventListener('input', function () {
+            const username = usernameInput.value.trim();
+    
+            if (username.length < 5) {
+                tooltip.style.display = 'block'; // Show the tooltip
+    
+                // Add the event listener to prevent form submission
+                form.addEventListener('submit', preventFormSubmission);
+                checkAndEnableSubmitButton();
+            } else {
+                tooltip.style.display = 'none'; // Hide the tooltip
+    
+                // Remove the event listener to allow form submission
+                form.removeEventListener('submit', preventFormSubmission);
+                checkAndEnableSubmitButton();
+            }
+            live_valid(username);
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const firstNameInput = document.getElementById('first-name');
+        const lastNameInput = document.getElementById('last-name');
+        const dobInput = document.getElementById('dob');
+        const tooltipFirstName = document.getElementById('first-name-error-tooltip');
+        const tooltipLastName = document.getElementById('last-name-error-tooltip');
+        const tooltipDob = document.getElementById('dob-error-tooltip');
+        const form = document.getElementById('bio-form');
+        const saveButton = form.querySelector('.save-button');
+
+        // Store a reference to the event listener function
+        let preventFormSubmission = function (event) {
+            event.preventDefault(); // Prevent form submission
+        };
+
+        function checkAndEnableSubmitButton() {
+            const errorMessages = [
+                tooltipFirstName.style.display === 'block' ? 'Invalid First Name' : '',
+                tooltipLastName.style.display === 'block' ? 'Invalid Last Name' : '',
+                tooltipDob.style.display === 'block' ? 'Invalid DOB' : '',
+            ];
+
+            if (errorMessages.some(message => message !== '')) {
+                form.addEventListener('submit', preventFormSubmission);
+            } else {
+                form.removeEventListener('submit', preventFormSubmission);
+            }
+        }
+
+        function validateName(nameInput, tooltip) {
+            const name = nameInput.value.trim();
+            if (!/^[A-Za-z]+$/.test(name)) {
+                tooltip.style.display = 'block';
+            } else {
+                tooltip.style.display = 'none';
+            }
+            checkAndEnableSubmitButton();
+        }
+
+        function validateDob(dobInput, tooltip) {
+            const enteredDate = new Date(dobInput.value);
+            const currentDate = new Date();
+            currentDate.setFullYear(currentDate.getFullYear() - 6); // 6 years before the current date
+            if (enteredDate >= currentDate) {
+                tooltip.style.display = 'block';
+            } else {
+                tooltip.style.display = 'none';
+            }
+            checkAndEnableSubmitButton();
+        }
+
+        // Add event listeners to the input fields
+        firstNameInput.addEventListener('input', function () {
+            validateName(firstNameInput, tooltipFirstName);
+        });
+
+        lastNameInput.addEventListener('input', function () {
+            validateName(lastNameInput, tooltipLastName);
+        });
+
+        dobInput.addEventListener('input', function () {
+            validateDob(dobInput, tooltipDob);
+        });
+
+        // Initial validation
+        validateName(firstNameInput, tooltipFirstName);
+        validateName(lastNameInput, tooltipLastName);
+        validateDob(dobInput, tooltipDob);
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const emailInput = document.getElementById('email');
+        const phoneNumberInput = document.getElementById('phone-number');
+        const emailTooltip = document.getElementById('email-error-tooltip');
+        const phoneNumberTooltip = document.getElementById('phone-number-error-tooltip');
+        const contactForm = document.getElementById('contact-form');
+    
+        // Store a reference to the event listener function
+        let preventFormSubmission = function (event) {
+            event.preventDefault(); // Prevent form submission
+        };
+    
+        function checkAndEnableSubmitButton() {
+            const errorMessages = [
+                emailTooltip.style.display === 'block' ? 'Invalid E-mail' : '',
+                phoneNumberTooltip.style.display === 'block' ? 'Invalid Phone Number' : '',
+            ];
+            console.log(errorMessages)
+            if (errorMessages.some(message => message !== '')) {
+                contactForm.addEventListener('submit', preventFormSubmission);
+            } else {
+                contactForm.removeEventListener('submit', preventFormSubmission);
+            }
+        }
+    
+        function validateEmail(email) {
+            // Basic email validation (you can add more advanced validation if needed)
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
+            return emailPattern.test(email);
+        }
+    
+        function validatePhoneNumber(phoneNumber) {
+            // Basic phone number validation (you can add more specific validation if needed)
+            const phoneNumberPattern = /^\d{10}$/;
+            return phoneNumberPattern.test(phoneNumber);
+        }
+    
+        // Add an event listener to the email field
+        emailInput.addEventListener('input', function () {
+            const email = emailInput.value.trim();
+    
+            if (!validateEmail(email)) {
+                emailTooltip.style.display = 'block'; // Show the tooltip
+                emailTooltip.textContent = 'Invalid E-mail';
+            } else {
+                emailTooltip.style.display = 'none'; // Hide the tooltip
+                emailTooltip.textContent = '';
+            }
+            checkAndEnableSubmitButton();
+        });
+    
+        // Add an event listener to the phone number field
+        phoneNumberInput.addEventListener('input', function () {
+            const phoneNumber = phoneNumberInput.value.trim();
+    
+            if (!validatePhoneNumber(phoneNumber)) {
+                phoneNumberTooltip.style.display = 'block'; // Show the tooltip
+                phoneNumberTooltip.textContent = 'Invalid Phone Number';
+            } else {
+                phoneNumberTooltip.style.display = 'none'; // Hide the tooltip
+                phoneNumberTooltip.textContent = '';
+            }
+            checkAndEnableSubmitButton();
+        });
+    });
+    
+</script>
+<style>
+    .custom-container {
+        min-height: 350px; /* Adjust the minimum width as needed */
+    }
+    /* Dark Theme Styles */
+.dark-theme {
+    background-color: #333; /* Dark background color */
+    color: #fff; /* Light text color */
+    border: 1px solid #555; /* Border style */
+    border-radius: 5px; /* Rounded corners for the container */
+}
+
+/* Active tab link style */
+.list-group-item.active {
+    background-color: #555; /* Active tab background color */
+}
+
+/* Inactive tab link style */
+.list-group-item {
+    background-color: #333; /* Inactive tab background color */
+    color: #fff; /* Text color for inactive tabs */
+}
+
+/* Additional CSS for Tab Content */
+.tab-content.dark-theme {
+    padding: 20px;
+}
+
+/* Style for headings in tab content */
+.tab-content h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #e45eff; /* Custom heading color */
+    text-align: center; /* Center-align the headings */
+}
+
+.tab-content p {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+input[type="radio"] + label {
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Style the checked radio button label */
+input[type="radio"]:checked + label,input[type="radio"]:disabled:checked + label {
+    color: #007bff; /* Set the desired text color for the checked option */
+}
+input[type="radio"]:disabled:checked + label {
+    color: white; /* Your desired text color for disabled and checked radio buttons */
+}
+/* Style the disabled radio buttons */
+input[type="radio"]:disabled + label {
+    color: #888; /* Set a grayed-out text color for disabled options */
+}
+.form-group {
+    max-width: 400px; /* Adjust the maximum width as needed */
+    margin: 0 auto; /* Center the form horizontally */
+}
+
+/* Style for form labels */
+.form-group label {
+    font-weight: bold; /* Make labels bold */
+}
+.input-group .invalid-feedback-icon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: red;
+    cursor: pointer;
+}
+
+/* Style for the error message tooltip */
+.invalid-feedback-tooltip {
+    display: none;
+    position: absolute;
+    background-color: rgba(255, 0, 0, 0.9);
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+    top: 0;
+    left: 100%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+}
+
+/* Show the tooltip on hover */
+.input-group:hover .invalid-feedback-tooltip {
+    display: block;
+}
+.custom-tooltip {
+    display: none;
+    background-color: #ff0000; /* Tooltip background color */
+    color: #fff; /* Tooltip text color */
+    padding: 5px;
+    border-radius: 4px;
+    position: absolute;
+    top: 100%; /* Position below the element */
+    left: 0;
+    z-index: 1; /* Ensure it's above other elements */
+}
+
+
+</style>
+{% endblock style %}
+
+
+{% block content %}
+<div class="custom-container">
+    <div class="container mt-5 mb-4 dark-theme">
+        <div class="row">
+            <div class="col-md-3">
+                <!-- Sidebar for section selection -->
+                <div class="list-group">
+                    <a href="#user-info" class="list-group-item list-group-item-action active" data-toggle="tab">User Information</a>
+                    <a href="#bio" class="list-group-item list-group-item-action" data-toggle="tab">Bio</a>
+                    <a href="#contact" class="list-group-item list-group-item-action" data-toggle="tab">Contact</a>
+                    <!-- Add more section links as needed -->
+                </div>
+            </div>
+            <div class="col-md-9">
+                <!-- Tab content -->
+                <div class="tab-content dark-theme">
+                    <!-- User Information Section -->
+                    <div class="tab-pane fade show active" id="user-info">
+                        <h2>User Information</h2>   
+                        <form method="post" action="{% url 'save_user' %}" id="user-info-form" enctype="multipart/form-data">
+                            {%  csrf_token %}
+                            <!-- User information fields here -->
+                            <input type="hidden" name="form_name" value="user">
+                            <div class="form-group mb-4">
+                                {% if user.userprofile.profile_image %}
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <img src="{{ user.userprofile.profile_image.url }}" alt="Profile Image" class="img-fluid rounded-circle border border-secondary" width="150px">
+                                </div>
+                                    {% else %}
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <img src="{% static 'img/def_png.png' %}" alt="Profile Image" class="img-fluid rounded-circle border border-secondary" width="150px">
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="mt-3 text-center custom-file">
+                                    <label for="prof_image" class="col-form-label custom-file-label">Profile Photo</label>
+                                    <input type="file" name="profile_image" accept="image/*" class="custom-file-input" id="prof_image" disabled>
+                                </div>
+                                
+                                
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="username">Username:</label>
+                                <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" disabled>
+                                <div class="invalid-feedback-icon">
+                                    <span id="username-error-tooltip" class="custom-tooltip" style="display: none;">Username must be at least 5 characters.</span>
+                                    <span id="live-valid"></span>
+                                </div>
+                                
+                            </div>
+                                                
+                            <button type="button" class="btn btn-primary edit-button">Edit</button>
+                            <button type="submit" class="btn btn-success save-button" style="display: none;">Save</button>
+                            <button id="sub" type="button" class="btn btn-secondary cancel-button invisible">Cancel</button>
+                        </form>
+                    </div>
+
+                    <!-- Bio Section -->
+                    <div class="tab-pane fade" id="bio">
+                        <h2>Bio</h2>
+                        <form method="post" action="{% url 'save_bio' %}" id="bio-form">
+                            {% csrf_token %}
+                            <!-- Bio fields here -->
+                            <input type="hidden" name="form_name" value="bio">
+                            <div class="form-group">
+                                <label for="first-name">First Name:</label>
+                                <input type="text" id="first-name" name="first_name" class="form-control" value="{{ user.first_name }}" disabled>
+                                <div class="invalid-feedback-icon">
+                                    <span id="first-name-error-tooltip" class="custom-tooltip" style="display: none;">Invalid First Name</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="last-name">Last Name:</label>
+                                <input type="text" id="last-name" name="last_name" class="form-control" value="{{ user.last_name }}" disabled>
+                                <div class="invalid-feedback-icon">
+                                    <span id="last-name-error-tooltip" class="custom-tooltip" style="display: none;">Invalid Last Name</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Gender:</label>
+                                <div class="form-check">
+                                    <input type="radio" id="male" name="gender" value="M" class="form-check-input" disabled {% if user.userprofile.gender == 'M' %}checked{% endif %}>
+                                    <label class="form-check-label" for="male">Male</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="radio" id="female" name="gender" value="F" class="form-check-input" disabled {% if user.userprofile.gender == 'F' %}checked{% endif %}>
+                                    <label class="form-check-label" for="female">Female</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="radio" id="other" name="gender" value="O" class="form-check-input" disabled {% if user.userprofile.gender == 'O' %}checked{% endif %}>
+                                    <label class="form-check-label" for="other">Other</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="dob">Date of Birth:</label>
+                                <input type="date" id="dob" name="dob" class="form-control" value="{{ user.userprofile.dob|date:'Y-m-d' }}" disabled>
+                                <div class="invalid-feedback-icon">
+                                    <span id="dob-error-tooltip" class="custom-tooltip" style="display: none;">Invalid DOB</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary edit-button">Edit</button>
+                            <button type="submit" class="btn btn-success save-button" style="display: none;">Save</button>
+                            <button type="button" class="btn btn-secondary cancel-button invisible">Cancel</button>
+                        </form>
+                    </div>
+
+                    <!-- Contact Section -->
+                    <div class="tab-pane fade" id="contact">
+                        <h2>Contact</h2>
+                        <form method="post" action="{% url 'save_contact' %}" id="contact-form">
+                            {% csrf_token %}
+                            <!-- Contact fields here -->
+                            <input type="hidden" name="form_name" value="contact">
+                            <div class="form-group">
+                                <label for="email">E-mail:</label>
+                                <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" disabled>
+                                <div class="invalid-feedback-icon">
+                                    <span id="email-error-tooltip" class="custom-tooltip" style="display: none;">Invalid E-mail</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone-number">Phone Number:</label>
+                                <input type="text" id="phone-number" name="phone_number" class="form-control" value="{{ user.userprofile.phone_number }}" disabled>
+                                <div class="invalid-feedback-icon">
+                                    <span id="phone-number-error-tooltip" class="custom-tooltip" style="display: none;">Invalid Phone Number</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary edit-button">Edit</button>
+                            <button type="submit" class="btn btn-success save-button" style="display: none;">Save</button>
+                            <button type="button" class="btn btn-secondary cancel-button invisible">Cancel</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>  
+
+{% endblock content %}

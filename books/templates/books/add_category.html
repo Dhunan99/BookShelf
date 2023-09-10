@@ -1,0 +1,14 @@
+
+{% block content %}
+<h2>Add a New Category</h2>
+{% if info %}
+<ul class="messages">
+    <li>{{ info }}</li>
+</ul>
+{% endif %}
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Add Category</button>
+</form>
+{% endblock %}

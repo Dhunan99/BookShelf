@@ -1,11 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth import login as lg, authenticate
-from django.core.mail import send_mail
 from django.contrib.auth.models import User
-from .forms import NewUserForm
+from .forms import NewUserForm,UserBioChangeForm,CustomUserChangeForm,UserBioChangeForm2,EmailChange,NumberChange,UserProfileChangeForm
 from django.contrib import messages
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse_lazy
@@ -13,8 +12,11 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from .models import OTPModel
 from pyotp import TOTP
+from django.http import JsonResponse
 import secrets
 from django.core.mail import send_mail
+from books.models import Books
+from django.views.decorators.csrf import csrf_exempt
   # Import User model
 # from django.contrib import messages
 # from django.contrib.auth import authenticate, login
@@ -43,7 +45,7 @@ def login(request):
             lg(request, user)
             # if user.is_superuser:
             #     return redirect('/admin')
-            return redirect('/user/home')
+            return redirect('/user/home',{'user',user})
         else:
             error_message = "Invalid login credentials"
     return render(request, 'user/login.html',{'error':error_message})
@@ -95,11 +97,23 @@ def verify_otp(request, user_id=None):
     return render(request, 'user/verify_otp.html')
 
 def send_otp_email(to_email, otp):
-    subject = 'Your OTP for registration'
-    message = f'Your OTP is: {otp}'
-    from_email = 'your@example.com'  # Replace with your email
+    subject = 'Your OTP for Registration'
+    message = f'Thank you for registering with our website!\n\n'
+    message += f'Your One-Time Password (OTP) for email verification is: {otp}\n\n'
+    message += 'Please enter this OTP on our website to complete your registration.\n\n'
+    message += 'If you did not sign up for an account, you can ignore this email.\n\n'
+    message += 'Thank you for choosing our service!\n\n'
+    message += 'Best regards,\nBookShelf'
+    from_email = 'midhunkrishnanm2024@mca.ajce.in'  # Replace with your email
     send_mail(subject, message, from_email, [to_email])
 
+
+def validate_username(request):
+    username = request.GET.get('username', None)
+    data = {
+        'is_taken': User.objects.filter(username__iexact=username).exists()
+    }
+    return JsonResponse(data)
 # def register(request):
 #     if request.method == 'POST':
 #         form = RegistrationForm(request.POST)
@@ -130,8 +144,52 @@ def send_otp_email(to_email, otp):
 
 @login_required
 def home(request):
-    return render(request,'user/home.html')
+     # Fetch book data from the Books model
+    books = Books.objects.filter(tags__name='Popular')  # You can also filter or order the data as needed
+    context = {
+        'books': books,
+    }
+    return render(request,'user/home.html',context)
 
+@login_required
+def user_profile(request):
+     return render(request,'user/profile.html')
+
+@login_required
+def save_profile(request):
+    if request.method == 'POST':
+        form_name = request.POST.get('form_name') 
+        if form_name == 'user':
+            user_form = CustomUserChangeForm(request.POST, instance=request.user)
+            if user_form.is_valid():
+                user_form.save()
+            form = UserProfileChangeForm(request.POST, request.FILES, instance=request.user.userprofile)
+            if form.is_valid():
+                form.save()
+            return redirect('/user/profile')  # Change 'profile' to your actual profile page URL
+        elif form_name == 'bio':
+            allowed_fields = ('first_name', 'last_name')
+            post_data = {key: request.POST[key] for key in allowed_fields}
+            form = UserBioChangeForm(post_data, instance=request.user)
+            if form.is_valid():
+                form.save()
+            allowed_fields = ('gender', 'dob')
+            post_data = {key: request.POST[key] for key in allowed_fields}
+            form=UserBioChangeForm2(post_data, instance=request.user.userprofile)
+            if form.is_valid():
+                form.save()
+            
+        elif form_name == 'contact':
+            post_data = {'email': request.POST['email']}
+            form = EmailChange(post_data, instance=request.user)
+            if form.is_valid():
+                form.save()
+            post_data = {'phone_number': request.POST['phone_number']}
+            form = NumberChange(post_data, instance=request.user.userprofile)
+            if form.is_valid():
+                form.save()
+    
+    return redirect('/user/profile')
 
 # def register(request):
     # if request.method == 'POST':

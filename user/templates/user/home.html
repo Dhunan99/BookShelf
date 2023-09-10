@@ -1,8 +1,483 @@
-<style>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Website</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        {% comment %} function toggleDropdown() {
+            var dropdownMenu = document.getElementById("dropdown-menu");
+            if (dropdownMenu.style.display === "none" || dropdownMenu.style.display === "") {
+                dropdownMenu.style.display = "block";
+            } else {
+                dropdownMenu.style.display = "none";
+            }
+        }
+
+        // Close the dropdown if the user clicks outside of it
+        window.onclick = function(event) {
+            var dropdown = document.querySelector('.navbar-user');
+            if (!dropdown.contains(event.target)) {
+                var dropdownMenu = document.getElementById("dropdown-menu");
+                dropdownMenu.style.display = "none";
+            }
+        } {% endcomment %}
+        const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+        const currentTheme = localStorage.getItem('theme');
+
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+        
+            if (currentTheme === 'dark') {
+                toggleSwitch.checked = true;
+            }
+        }
+
+        function switchTheme(e) {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            else {        document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }    
+        }
+
+        toggleSwitch.addEventListener('change', switchTheme, false);
+    </script>
+    <script>
+        $(document).ready(function(){
+            $('#bookCarousel').carousel();
+            $('#home1').click(function(){
+                window.location.href = '{% url 'home' %}';
+            })
+        });
+    </script>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        data-theme="dark"] {
+
+            --font-color: #fefefe;
+            --bg-color: #121212;
+        }
+        .navbar {
+            background-color: #333;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-logo {
+            flex: 1;
+        }
+
+        .navbar-content {
+            flex: 3;
+            text-align: center;
+        }
+
+        .navbar-user {
+            flex: 0.39;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .navbar-logo img {
+            width: 100px; /* Adjust the logo size as needed */
+        }
+
+        .navbar a {
+            text-decoration: none;
+            color: #fff;
+            margin: 0 20px;
+            font-weight: bold;
+            position: relative; /* Add position relative to create an anchor point for the underline */
+        }
+        
+        .navbar a::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px; /* Set the desired underline thickness */
+            bottom: -5px;
+            left: 0;
+            background-color: #fff;
+            transform: scaleX(0); /* Initially, set the scaleX to 0 to hide the underline */
+            transform-origin: bottom left;
+            transition: transform 0.3s ease; /* Add a transition for the transform property */
+        }
+        
+        .navbar a:hover {
+            color: #ff6347; /* Change color on hover */
+        }
+        
+        .navbar a:hover::before {
+            transform: scaleX(1); /* Scale the underline to its full width on hover */
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .navbar-logo,
+            .navbar-content,
+            .navbar-user {
+                flex: auto;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+
+            .navbar-logo img {
+                width: 80px; /* Adjust the logo size for mobile */
+            }
+        }
+
+                    /* Define styles for the dropdown */
+            .dropdown {
+                position: relative;
+                display: inline-block;
+            }
+
+            /* Hide the dropdown content by default */
+            .dropdown-content {
+                position: absolute;
+                background-color: #333;
+                min-width: 130px;
+                box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                z-index: 1;
+                opacity: 0; /* Initially, set opacity to 0 */
+                transform: translateY(10px); /* Move it down a bit initially */
+                transition: opacity 0.5s, transform 0.5s; /* Slower transitions for opacity and transform */
+                pointer-events: none; /* Disable pointer events to prevent interaction with hidden content */
+            }
+
+            /* Style the links inside the dropdown */
+            .dropdown-content a {
+                color: #fff;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                position: relative; /* Add position relative for the ::before pseudo-element */
+            }
+
+            /* Add an underline to the dropdown links */
+            .dropdown-content a::before {
+                content: '';
+                position: absolute;
+                width: 100%;
+                height: 2px; /* Set the desired underline thickness */
+                bottom: 5px; /* Adjust the value to move the underline closer to the text */
+                left: 0;
+                background-color: #fff;
+                transform: scaleX(0); /* Initially, set scaleX to 0 to hide the underline */
+                transform-origin: bottom left;
+                transition: transform 0.3s ease; /* Add a transition for the transform property */
+            }
+
+            /* Hover effect for the links */
+            .dropdown-content a:hover::before {
+                transform: scaleX(1); /* Scale the underline to its full width on hover */
+            }
+
+            /* Show the dropdown content when hovering over the dropdown */
+            .dropdown:hover .dropdown-content {
+                opacity: 1; /* Fade in by changing opacity to 1 */
+                transform: translateY(0); /* Move it back to its original position */
+                pointer-events: auto; /* Enable pointer events to interact with visible content */
+            }
+
+            /* Hide the dropdown content when not hovering over the dropdown */
+            .dropdown:not(:hover) .dropdown-content {
+                opacity: 0; /* Hide by changing opacity to 0 */
+                transform: translateY(10px); /* Move it down */
+                pointer-events: none; /* Disable pointer events */
+            }
+
+
+        .switch {
+            height: 100px;
+            position: fixed;
+            right: 50px;
+            top: 50px;
+        }
+            
+        .theme-switch {
+        display: inline-block;
+        height: 34px;
+        position: relative;
+        width: 60px;
+        margin:10px
+        }
+
+        .theme-switch input {
+        display:none;
+        }
+
+        .slider {
+        background-color: #ccc;
+        bottom: 0;
+        cursor: pointer;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        transition: .4s;
+        }
+
+        .slider:before {
+        background-color: #fff;
+        bottom: 4px;
+        content: "";
+        height: 26px;
+        left: 4px;
+        position: absolute;
+        transition: .4s;
+        width: 26px;
+        }
+
+        input:checked + .slider {
+        background-color: #2b2b2b;
+        }
+
+        input:checked + .slider:before {
+        transform: translateX(26px);
+        }
+
+        .slider.round {
+        border-radius: 34px;
+        }
+
+        .slider.round:before {
+        border-radius: 50%;
+        }
+        .hover-image {
+            width: 100px; /* Set your image width */
+            height: 100px; /* Set your image height */
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        /* Change color to white on hover */
+        .hover-image:hover {
+            transform: scale(1.1) rotate(-45deg); /* Apply the transform effect */
+        }
+        #bookCarousel {
+            margin-top: 20px;
+            /* Customize other carousel styles as needed */
+        }
+        
+        .book-slide {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .book-image {
+            max-width: 200px; /* Adjust the image size as needed */
+            height: auto;
+            margin-right: 20px; /* Adjust spacing between image and details */
+        }
+        
+        .book-details {
+            flex: 1;
+            padding: 1px;
+            /* Customize styles for book details */
+        }
+        .book-details h3 {
+            margin-bottom: 10px; /* Add margin to create space between book title and other details */
+        }
+        .carousel-control-prev,
+        .carousel-control-next {
+            width: auto; /* Make sure they adjust their width automatically */
+            background-color: #1a1a1a; /* Add a background color for visibility */
+            transition: background-color 0.3s; /* Add a smooth transition for hover effect */
+            border-radius: 50%; /* Make them circular (optional) */
+        }
+        {% comment %} .carousel-control-prev:hover,
+        .carousel-control-next:hover {
+            background-color: #333; /* Change background color on hover */
+        } {% endcomment %} 
+        
+          /* Custom CSS for social links */
+          .social-link {
+            color: #17a2b8; /* Change social link color to teal */
+            text-decoration: none; /* Remove underline */
+          }
+        
+          .social-link:hover {
+            color: #; /* Change social link color on hover */
+            text-decoration: underline; /* Add underline on hover */
+          }
+          .profile-image {
+            max-height: 70px; /* Set your desired maximum height */
+            max-width: 70px; /* Set your desired maximum height */
+            border: 2px solid #ccc; /* Add a border with a 2px width and color of your choice */
+            border-radius: 50%; /* Optional: Make it a circular image */
+            margin-right: 10px; /* Optional: Add some spacing to the right */
+        }
+        #bookCarousel{
+            min-height:400px;
+        }
+        
+    </style>
+    {% block style %}{% endblock style %}
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-logo">
+                <img src="{% static 'img/logo.png' %}" alt="Website Logo" class="hover-image" id="home1">
+        </div>
+        <div class="navbar-content">
+            <a href="/books/book_list" id="browse">Browse</a>
+            <a href="#">Ranking</a>
+            <a href="#">Write</a>
+            <a href="#">Author</a>
+            <a href="#">Contact</a>
+            <a href="#">Forum</a>
+        </div>
+        <div>
+            <div class="navbar-content">
+                    <a href="#">Library</a>
+            </div>
+        </div>
+        <div>
+            <div class="navbar-content">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" / checked>
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </div>
+        <div class="navbar-user dropdown" onclick="toggleDropdown()">
+            {% if user.userprofile.profile_image %}
+            <img src="{{ user.userprofile.profile_image.url }}" alt="User Profile" class="profile-image">
+            {% else %}
+            <img src="{% static 'img/def_png.png' %}" alt="User Profile" class="profile-image">
+            {% endif %}
+            {{ user.username }}
+            <div class="dropdown-content" id="dropdown-menu">
+                <a href="/user/profile">Profile</a>
+                <a href="#">Settings</a>
+                <a href="/accounts/logout">Logout</a>
+            </div>
+        </div>
+        
+    </div>
+    {% block content %}
+    <div class="container">
+        
+        <h1>Popular Now</h1>
+        <div id="bookCarousel" class="carousel slide" data-ride="carousel" data-interval="3000">
+            <!-- Wrapper for slides -->
+            <div class="carousel-inner">
+                {% for book in books %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <div class="book-slide">
+                        <img src="{{ book.cover_image.url }}" alt="{{ book.Title }}" class="book-image">
+                        <div class="book-details">
+                            <h3>{{ book.Title }}</h3>
+                            <p>Author: {{ book.Author.AuthorName }}</p>
+                            <p>Categories: 
+                                {% for category in book.Categories.all %}
+                              {{ category.name }}{% if not forloop.last %}, {% endif %}
+                          {% endfor %}
+                              </p>
+                            <p>Summary: {{ book.Description|truncatechars:500 }}{% if book.Description|length > 200 %} <a href="{% url 'book_detail' book_id=book.BookID %}" class="read-more">Read More</a>{% endif %}</p>
+                            <h4>Price: ₹{{book.Price|floatformat:"0"}}</h2>
+                            <!-- You can add more book details here as needed -->
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                </div>
+
+            <!-- Controls -->
+            <a class="carousel-control-prev" href="#bookCarousel" role="button" data-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="sr-only"></span>
+            </a>
+            <a class="carousel-control-next" href="#bookCarousel" role="button" data-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="sr-only"></span>
+            </a>
+        </div>
+        
+    </div>
+    {% endblock content %}
+    <footer class="bg-dark text-light py-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-2">
+                    <img src="{% static 'img/company_logo.png' %}" alt="Website Logo" class="img-fluid" style="max-width: 140px">
+                </div>
+                <div class="col-md-6 text-center">
+                    <p>&copy; 2023 BookShelf. All rights reserved.</p>
+                </div>
+                <div class="col-md-2">
+                    <p class="mb-1">Follow us on</p>
+                    <ul class="list-inline">
+                        <li class="list-inline-item">
+                            <a href="#" class="social-link">Facebook</a>
+                        </li>
+                        <li class="list-inline-item">
+                            <a href="#" class="social-link">Twitter</a>
+                        </li>
+                        <li class="list-inline-item">
+                            <a href="#" class="social-link">Instagram</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-2 text-md-right">
+                    <ul class="list-unstyled">
+                        <li>
+                            <a href="#" class="footer-link">Privacy Policy</a>
+                        </li>
+                        <li>
+                            <a href="#" class="footer-link">Contact Us</a>
+                        </li>
+                        <li>
+                            <a href="#" class="footer-link">About Us</a>
+                        </li>
+                        <li>
+                            <a href="#" class="footer-link">FAQ</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+      
+      
+      
+</body>
+</html>
+
+
+
+{% comment %} <style>
     li{list-style-type: none}
 </style>
 <nav style="float:right;">
+    <li>{{user.username}}</li>
     <li><a href="/accounts/logout">logout</a></li>
     <li><a href="/books/book_list">Books</a></li>
 </nav>
-<h1>You are at home</h1>
+<h1>You are at home</h1> {% endcomment %}
