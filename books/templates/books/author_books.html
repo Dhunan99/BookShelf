@@ -1,0 +1,298 @@
+{% extends "books/book_list.html" %}
+{% block content %}
+<style>
+    /* Custom styles for the library heading */
+    .library-heading {
+      font-size: 24px; /* Adjust the font size as needed */
+      font-weight: bold;
+      color: grey; /* Text color */
+      text-transform: uppercase; /* Uppercase text */
+      border-bottom: 2px solid #333; /* Add a bottom border */
+      padding-bottom: 10px; /* Space between text and border */
+      margin-left: 20px; /* Adjust the left margin as needed */
+    }
+    input#search-bar.search-bar{
+        width:100%;
+    }
+    .current-page {
+      padding: 5px 10px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 3px;
+      background-color: #fff; /* Light background color */
+      color: #333; /* Dark text color */
+  }
+  .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      margin-bottom: 20px;
+  }
+  .step-links {
+      display: flex;
+  }
+
+  .step-links a {
+      padding: 5px 10px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 3px;
+      text-decoration: none;
+      color: #fff; /* Light text color */
+      background-color: #333; /* Dark background color */
+      transition: background-color 0.3s, color 0.3s;
+  }
+
+  .step-links a:hover {
+      background-color: #555; /* Slightly darker background color on hover */
+      color: #fff; /* Light text color on hover */
+  }
+  </style>
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+<script>
+  $(document).ready(function () {
+      const searchIcon = $('#search-icon');
+      const searchWrapper = $('.search-wrapper');
+      const searchBar = $('#search-bar');
+      const searchResults = $('#search-results');
+      const searchResultsContainer = $('#search-results-container');
+      const authorId = {{ author.Author }};
+      const initial_state = searchResultsContainer.html();
+      paginationContainer=$('.pagination');
+
+      searchIcon.on('click', function () {
+          searchWrapper.toggleClass('active');
+          searchBar.focus();
+      });
+
+      searchBar.on('input', function () {
+          const query = searchBar.val();
+          if (query.length >= 3) {  
+              fetch(`/books/filter_books_by_author/?query=${query}&author_id=${authorId}`, { method: 'GET' })
+                  .then(response => response.json())
+                  .then(data => {
+                      displaySearchResults(data);
+                      paginationContainer.hide();
+                  });
+          } else if(query.length==0){
+            searchResultsContainer.html(initial_state);
+            searchResultsContainer.show();
+            paginationContainer.show();
+          }
+      });
+
+      function clearSearch() {
+          searchBar.val('');
+          searchResults.empty().hide();
+      }
+
+      $(document).on('click', function (event) {
+          if (!searchWrapper.is(event.target) && searchWrapper.has(event.target).length === 0) {
+              // Click occurred outside of the search bar and search results
+              clearSearch();
+          }
+      });
+
+      function displaySearchResults(results) {  
+        // Clear previous search results
+        searchResultsContainer.empty();
+    
+        if (results.length === 0) {
+            searchResultsContainer.hide(); // Hide the results container if there are no results
+        } else {
+            results.forEach(function (result) {
+                // Create a div for each result item
+                const item = $('<div class="col-md-6 mb-4"></div>'); // Use col-md-6 to display 2 items per row on medium screens
+    
+                // Create a card element for each book
+                const card = $('<div class="card"></div>');
+    
+                // Create a card body
+                const cardBody = $('<div class="card-body"></div>');
+    
+                // Create a row for book details
+                const detailsRow = $('<div class="row"></div>');
+    
+                // Create a column for the book cover
+                const coverColumn = $('<div class="col-md-4 col-sm-12"></div>'); // col-md-4 for medium screens, col-sm-12 for small screens
+    
+                // Create an image for the book cover
+                const coverImage = $('<img>', {
+                    src: result.cover_image, // Replace with the appropriate URL
+                    alt: result.Title + ' Cover',
+                    class: 'book-cover img-fluid', // Add img-fluid for responsive images
+                });
+    
+                // Append the cover image to the cover column
+                coverColumn.append(coverImage);
+    
+                // Create a column for the book details
+                const detailsColumn = $('<div class="col-md-8 col-sm-12 pl-5"></div>'); // col-md-8 for medium screens, col-sm-12 for small screens, added pl-4 for left padding
+    
+                // Create a title for the book
+                const title = $('<h5 class="card-title"></h5>').text(result.Title);
+    
+                // Create a paragraph for the author
+                const author = $('<p><strong>Author:</strong> ' + result.Author__AuthorName + '</p>');
+    
+                // Create a paragraph for the language
+                const language = $('<p><strong>Language:</strong> ' + result.language + '</p>');
+    
+                // Create a paragraph for categories
+                const categories = $('<p><strong>Categories:</strong></p>');
+    
+                result.Categories__name.forEach(function (category) {
+                    categories.append($('<span></span>').text(category));
+                    categories.append(', '); // Add a comma and space between categories
+                });
+    
+                // Remove the trailing comma and space
+                categories.html(categories.html().slice(0, -2));
+    
+                // Create a paragraph for the price
+                const price = $('<p><strong>Price:</strong> ' + result.Price + '</p>');
+    
+                // Create a link to the book details page
+                const viewDetailsLink = $('<a class="btn btn-success btn-sm">View Details</a>').attr('href', `/books/book/${result.BookID}/`);
+    
+                // Append elements to the details column
+                detailsColumn.append(title, author, language, categories, price, viewDetailsLink);
+    
+                // Append the cover column and details column to the details row
+                detailsRow.append(coverColumn, detailsColumn);
+    
+                // Append the details row to the card body
+                cardBody.append(detailsRow);
+    
+                // Append the card body to the card
+                card.append(cardBody);
+    
+                // Append the card to the item
+                item.append(card);
+    
+                // Append the item to the search results container
+                searchResultsContainer.append(item);
+            });
+    
+            // Show the results container when there are results
+            searchResultsContainer.show();
+        }
+    }
+    
+    
+      
+      
+      
+      
+  });
+</script>
+<div class="container" style="min-height:293px;">
+  <div class="row">
+    <div class="breadcrumb">
+      <a href="/">Home</a> /
+      <a href="/books/authors">Authors</a> /
+      <a href="/books/author_works/{{author.Author}}">{{author.AuthorName}}</a>
+    </div>
+    <div class="col-md-12">
+      <!-- Category selection bar -->
+      <!-- Category selection bar -->
+<!-- Category selection bar -->
+<nav class="navbar navbar-expand-lg navbar-dark category-bar">
+  <div class="container justify-content-center"> <!-- Add justify-content-center class here -->
+    <a class="navbar-brand" href="{% url 'view_works' author_id=author.Author %}">All Categories</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ml-auto">
+        {% for category in categories|dictsort:"name"|slice:7 %}
+        <li class="nav-item" >
+          <a class="nav-link category-item hide-label" href="{% url 'view_works' author_id=author.Author category=category.name %}">{{ category.name }}</a>
+        </li>
+        {% endfor %}
+        <button class="btn btn-link btn-sm" type="button" data-toggle="collapse" data-target="#allCategories" aria-expanded="false" aria-controls="allCategories">
+          <spa class="navbar-toggler-icon"></spa>
+        </button>
+        
+        <!-- Add more category items here -->
+      </ul>
+      
+      <!-- Add a collapse button for all categories -->
+    </div>
+    
+  </div>
+</nav>
+<div class="search-container">
+  <div class="search-wrapper" style="width:300px;">
+      <input type="text" class="search-bar" id="search-bar" placeholder="Search books by {{author.AuthorName}}" autocomplete="off">
+      <i class="fas fa-search search-icon" id="search-icon" style="padding-left:10px;"></i>
+  </div>
+  <div class="search-results" id="search-results"></div>
+</div>
+
+
+<div class="collapse" id="allCategories">
+  <ul class="row">
+    {% for category in categories|dictsort:"name" %}
+    {% if forloop.counter > 7 %}
+    <div class="col-md-3 mb-3"> <!-- Adjust the column width as needed -->
+      <li class="nav-item">
+        <a class="nav-link category-item" href="{% url 'view_works' author_id=author.Author category=category.name %}">{{ category.name }}</a>
+      </li>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </ul>
+</div>
+
+<h3 class="text-left mb-4 library-heading">Books by {{author.AuthorName}}</h3>
+
+
+    </div>
+  </div>
+  <div style="min-height:293px;">
+  <div class="row" style="min-height:293px;"id="search-results-container">
+    {% for book in books %}
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-body">
+            <img src="{{ book.cover_image.url }}" alt="{{ book.Title }} Cover" class="book-cover">
+            <div>
+              <h5 class="card-title">{{ book.Title }}</h5>
+              <p><strong>Author:</strong> {{ book.Author.AuthorName }}</p>
+              <p><strong>Language:</strong> {{ book.LanguageID.LanguageName }}</p>
+              <p><strong>Categories:</strong> 
+                {% for category in book.Categories.all %}
+                  {{ category.name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </p>
+              <p><strong>Price:</strong> {{ book.Price }}</p>
+              <a href="{% url 'book_detail' book_id=book.BookID %}" class="btn btn-success btn-sm">View Details</a>
+              {% if user.is_superuser %}
+                <a href="{% url 'delete_book' book.pk %}" class="btn btn-danger btn-sm">Delete</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+<div class="pagination">
+  <span class="step-links">
+      {% if books.has_previous %}
+          <a href="?page=1">&laquo; first</a>
+          <a href="?page={{ books.previous_page_number }}">previous</a>
+      {% endif %}
+      
+      <span class="current-page">{{ books.number }}</span>
+      
+      {% if books.has_next %}
+          <a href="?page={{ books.next_page_number }}">next</a>
+          <a href="?page={{ books.paginator.num_pages }}">last &raquo;</a>
+      {% endif %}
+  </span>
+</div>
+</div>
+{% endblock content %}

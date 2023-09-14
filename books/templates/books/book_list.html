@@ -11,6 +11,7 @@
   .card-body {
     display: flex;
     align-items: center;
+    box-shadow: 0 4px 4px 4px rgba(0, 0, 0, 0.4);
   }
 
   .book-cover {
@@ -26,7 +27,7 @@
   .category-bar {
     background-color: #333;
     color: #fff;
-    border-radius: 0 0 25px 25px;
+    border-radius: 25px 25px 25px 25px;
   }
 
   .category-item {
@@ -197,7 +198,17 @@ div.search-results-item:hover{
   .search-results-link:visited {
     color: #8a63e7; /* Visited link color */
   }
-  
+  /* Add this CSS code to enlarge the title on hover */
+.card:hover {
+  transform: scale(1.07); /* Adjust the scale factor as needed */
+  transition: transform 0.3s; /* Add a smooth transition effect */
+}
+
+/* Reset the title back to its original size when not hovering */
+.card {
+  transition: transform 0.3s; /* Add the same transition effect */
+}
+
 
 
 </style>
@@ -302,9 +313,10 @@ div.search-results-item:hover{
 <div class="container">
   <div class="row">
     <div class="col-md-12">
-      <!-- Category selection bar -->
-      <!-- Category selection bar -->
-<!-- Category selection bar -->
+<div class="breadcrumb">
+  <a href="/">Home</a> /
+  <a href="/books/book_list">Browse</a>
+</div>
 <nav class="navbar navbar-expand-lg navbar-dark category-bar">
   <div class="container justify-content-center"> <!-- Add justify-content-center class here -->
     <a class="navbar-brand" href="{% url 'book_list' %}">All Categories</a>

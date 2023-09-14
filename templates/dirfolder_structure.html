@@ -1,0 +1,11 @@
+<!-- folder_structure.html -->
+    <ul>
+        {% for folder in folder_data %}
+            <li>{{ folder.name }}</li>
+            <ul>
+                {% for subfolder in folder.subfolders %}
+                    <li>{{ subfolder.name }}</li>
+                {% endfor %}
+            </ul>
+        {% endfor %}
+    </ul>

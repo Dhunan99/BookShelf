@@ -254,5 +254,3 @@ def save_profile(request):
 #         else:
 #             Member=Membr_form()
 #             return render(request,'error.html')
-
-

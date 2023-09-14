@@ -1,4 +1,6 @@
 {% extends "user/home.html" %}
+{% load static %}
+{% load custom_filters %}
 {% block style %}
 <style>
   .search-container {
@@ -60,6 +62,7 @@
 }
 .search-results {
   top: calc(25% + 10px); /* Position it 10px below the search bar */
+  right: calc(10% + 10px);
 }
 
   
@@ -136,13 +139,16 @@ body {
 }
 
 .book-title {
-  font-size: 24px; /* Increase font size */
+  font-size: 32px; /* Increase font size for more impact */
   margin-bottom: 20px;
   color: #fff; /* White text color */
-  text-shadow: 2px 2px 4px #0000FF;
-  color: white;
-  padding-bottom:20px;
+  text-shadow: 2px 2px 4px rgba(3, 7, 252, 0.8); /* Add a shadow with a blue tint */
+  font-weight: bold; /* Make the title bold */
+  text-transform: uppercase; /* Convert text to uppercase */
+  letter-spacing: 2px; /* Add letter spacing for a unique look */
+  padding-bottom: 20px;
 }
+
 
 .book-info {
     flex-grow: 1;
@@ -171,7 +177,11 @@ div#search-results.search-results{
 }
 @media (max-width: 768px) {
   .search-results {
-    top: calc(58% + 10px); 
+    top: calc(58% + 200px); 
+  }
+}
+@media (max-width: 1110px) {
+  .breadcrumb {
   }
 }
 /* Add more styles as needed */
@@ -306,12 +316,97 @@ form textarea {
 form{
   color:black;
 }
+.error-border {
+  border: 1px solid red;
+}
+.error{
+  color:red;
+}
 /* Add more CSS styles as needed */
+.ratings-column {
+  background-color: #1e1e1e; /* Dark background color for ratings column */
+  color: #fff; /* White text color */
+  padding: 20px;
+  border-radius: 5px;
+  margin-bottom:10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Slightly darker box shadow */
+}
 
+.user-review {
+  background-color: #272727; /* Dark background color for user reviews */
+  border: 1px solid #333; /* Darker border color */
+  border-radius: 5px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Slightly darker box shadow */
+}
+
+.user-review h3 {
+  font-size: 20px;
+  margin-top: 0;
+}
+
+.text-muted {
+  color: #888;
+}
+
+.like-button button {
+  background-color: #007bff; /* Blue like button color */
+  color: #fff; /* White text color for like button */
+}
+
+.like-button button:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.additional-content {
+  display: none;
+}
+
+.read-more button {
+  background: none;
+  border: none;
+  color: #007bff; /* Blue text color for "Read More" button */
+  cursor: pointer;
+}
+
+.read-more button:hover {
+  text-decoration: underline; /* Underline on hover */
+}
+.reviews-container{
+  background-color: #272727;
+}
+div.ratings-column p{
+  font-size:20px;
+}
+.like-container {
+  display: grid;
+  grid-template-columns: auto 1fr; /* Adjust the column widths as needed */
+  align-items: center; /* Vertically center align content */
+  gap: 10px; /* Adjust the gap between the button and like count */
+}
+
+.like-button {
+  grid-column: 1; /* Position button in the first column */
+}
+
+.like-count {
+  grid-column: 2; /* Position like count in the second column */
+  text-align: right; /* Right-align the like count */
+}
+.dp{
+  max-width:100px;
+  border-radius:30px;
+}
+.breadcrumb{
+  float:left;
+}
 </style>
 {% endblock style %}
 {% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
+  
   $(document).ready(function() {
     const searchIcon = $('#search-icon');
     const searchWrapper = $('.search-wrapper');
@@ -429,7 +524,7 @@ form{
     const averageRating = count > 0 ? sum / count : 0;
   
     // Set the style attribute of the .Steaks span with the calculated average rating
-    const steaksSpan = document.querySelector('.Steaks');
+    const steaksSpan = document.querySelector('.Steaks#overall_rat');
     steaksSpan.style.setProperty('--rating', averageRating.toFixed(1));
     ratingValuesString +=averageRating.toFixed(1).toString();
     var hiddenInput = document.querySelector('input[type="hidden"][name="Rating"]');
@@ -455,6 +550,7 @@ form{
   
   // Event listener for rating inputs in each category
   document.addEventListener('DOMContentLoaded', function() {
+    calculateAverageRating();
     // Event listener for rating inputs in each category
     document.querySelectorAll('.rating input[type="radio"]').forEach((input) => {
       input.addEventListener('change', () => {
@@ -469,27 +565,268 @@ form{
 </script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-      const reviewForm = document.getElementById("reviewForm");
-      const ratingInput = document.querySelector('input[name="Rating"]');
+    const reviewForm = document.getElementById("reviewForm");
+    const ratingInput = document.querySelector('input[name="Rating"]');
+    const titleInput = document.getElementById('reviewTitle');
+    const reviewInput = document.getElementById('reviewText');
+    const titleError = document.getElementById('titleError');
+    const reviewError = document.getElementById('reviewError');
 
-      reviewForm.addEventListener("submit", function (event) {
-          if (ratingInput.value === "") {
-              event.preventDefault(); // Prevent form submission
-              alert("Please give ratings before submitting the review.");
-          }
-      });
+    function validateForm() {
+        const titleValue = titleInput.value;
+        const reviewValue = reviewInput.value;
+        const words = reviewValue.split(/\s+/);
+        const wordCount = words.length;
+        
+        let isTitleValid = true;
+        let isReviewValid = true;
+
+        if (titleValue.length < 5) {
+            titleError.textContent = 'Title must be at least 5 characters long.';
+            titleInput.classList.add('error-border');
+            isTitleValid = false; // Set to false to indicate validation failure
+        } else {
+            titleError.textContent = '';
+            titleInput.classList.remove('error-border');
+        }
+
+        if (wordCount < 50) {
+            reviewError.textContent = 'Review must contain at least 50 words.';
+            reviewInput.classList.add('error-border');
+            isReviewValid = false; // Set to false to indicate validation failure
+        } else {
+            reviewError.textContent = '';
+            reviewInput.classList.remove('error-border');
+        }
+
+        return isTitleValid && isReviewValid; // Return true if both fields are valid
+    }
+
+    reviewForm.addEventListener("submit", function (event) {
+        const formIsValid = validateForm();
+        
+        if (formIsValid) {
+            if (ratingInput.value==0.0) {
+                event.preventDefault(); // Prevent form submission
+                alert("Please give ratings before submitting the review.");
+            }
+        } else {
+            event.preventDefault(); // Prevent form submission
+            alert("Please correct the errors before submitting the review.");
+        }
+    });
   });
 </script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggleEditButton = document.getElementById("toggleEditButton");
+    const titleInput = document.getElementById("reviewTitle");
+    const reviewTextarea = document.getElementById("reviewText");
+    const sub = document.getElementById("sub_btn");
+  
+    // Check if there's content in review and title fields
+    const hasContent = reviewTextarea.value.trim() !== "" || titleInput.value.trim() !== "";
+  
+    // Initialize the state based on whether there's content
+    let isReadOnly = hasContent;
+    // Set initial attributes
+    titleInput.readOnly = isReadOnly;
+    reviewTextarea.readOnly = isReadOnly;
+    if (isReadOnly) {
+      sub.disabled = true;
+    } else {
+      sub.disabled = false;
+    }
+  
+    // Change the button text based on the current state
+    toggleEditButton.textContent = isReadOnly ? "Enable Edit" : "Disable Edit";
+  
+    toggleEditButton.addEventListener("click", function () {
+      // Toggle the readonly attribute for title and review fields
+      isReadOnly = !isReadOnly;
+      titleInput.readOnly = isReadOnly;
+      reviewTextarea.readOnly = isReadOnly;
+      if (isReadOnly) {
+        sub.disabled = true;
+      } else {
+        sub.disabled = false;
+      }
+  
+      // Change the button text based on the current state
+      toggleEditButton.textContent = isReadOnly ? "Enable Edit" : "Disable Edit";
+    });
+  });
+  
+</script>
+<script>
+  $(document).ready(function() {
+    // Listen for the "Like" button click event
+    $('.like-button').on('click', 'button', function() {
+        toggleLike($(this));
+    });
 
+    function toggleLike(button) {
+        var hiddenInput = button.closest('.like-button').find('.review_id');
+        var reviewId = hiddenInput.val();
+
+        // Send an AJAX POST request to your Django server
+        $.ajax({
+            type: 'POST',
+            url: '{% url 'toggle_like_review' %}',
+            data: {
+                'review_id': reviewId,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(data) {
+                // Toggle the button label between "Like" and "Unlike"
+                if (data === 'Liked successfully') {
+                    button.text('Unlike');
+                } else if (data === 'Unliked successfully') {
+                    button.text('Like');
+                }
+
+                // Update the like count (if needed)
+                var selector = "#likes_" + reviewId;
+                var likeCountElement = document.querySelector(selector);
+
+                if (likeCountElement) {
+                    var currentLikes = parseInt(likeCountElement.innerHTML);
+
+                    if (data === 'Liked successfully') {
+                        likeCountElement.innerHTML = (currentLikes + 1);
+                    } else if (data === 'Unliked successfully') {
+                        likeCountElement.innerHTML = (currentLikes - 1);
+                    }
+                }
+            },
+            error: function(xhr, textStatus, errorThrown) {
+                console.error('Error:', errorThrown);
+            }
+        });
+    }
+});
+
+
+  </script>
+  <script>
+    $(document).ready(function() {
+      // Iterate through each review
+      $(".user-review").each(function() {
+        var $reviewContent = $(this).find(".review-content");
+        var content = $reviewContent.text();
+        var maxLength = 720; // Maximum length for truncation
+  
+        // Check if content length exceeds the maximum length
+        if (content.length > maxLength) {
+          // Split the content into words
+          var words = content.split(" ");
+          var truncatedContent = "";
+          var remainingContent = "";
+          var isExpanded = false;
+  
+          // Iterate through words to build truncated content
+          for (var i = 0; i < words.length; i++) {
+            if ((truncatedContent + words[i]).length <= maxLength) {
+              truncatedContent += words[i] + " ";
+            } else {
+              remainingContent = words.slice(i).join(" ");
+              break;
+            }
+          }
+  
+          // Display the truncated content
+          $reviewContent.html(truncatedContent + '<span class="remaining-content">' + remainingContent + '</span>');
+  
+          // Hide the remaining content
+          $(this).find(".remaining-content").hide();
+  
+          // Add a click event to toggle the content
+          var $readMoreButton = $(this).find(".read-more-button");
+          var $remainingContent = $(this).find(".remaining-content");
+  
+          $readMoreButton.click(function() {
+            isExpanded = !isExpanded;
+  
+            if (isExpanded) {
+              // Show the remaining content and change the button text
+              $remainingContent.show();
+              $readMoreButton.text("Show Less");
+            } else {
+              // Hide the remaining content and change the button text
+              $remainingContent.hide();
+              $readMoreButton.text("Read More");
+            }
+          });
+        }else {
+          // Hide "Read More" button if content length is within the limit
+          $(this).find(".read-more-button").hide();
+        }
+      });
+    });
+  </script>
+  <script>
+    $(document).ready(function () {
+        const deleteReviewButton = document.getElementById("deleteReviewButton");
+
+        deleteReviewButton.addEventListener("click", function () {
+            // Confirm the deletion with a confirmation dialog
+            if (confirm("Are you sure you want to delete this review?")) {
+                // Send an AJAX request to delete the review
+                const reviewId = "{{ user_review.id }}";  // Replace with the actual review ID
+                $.ajax({
+                    type: "POST",
+                    url: `/books/delete_review/${reviewId}/`,  // Replace with your URL pattern
+                    data: { csrfmiddlewaretoken: "{{ csrf_token }}" },
+                    success: function (data) {
+                        // Redirect to a relevant URL after deletion (e.g., book detail page)
+                        if(data=='refresh'){
+                          location.reload();
+                        }
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        // Handle errors, if any
+                        console.error("Error:", errorThrown);
+                    },
+                });
+            }
+        });
+    });
+</script>
+
+<script>
+  // Check if the "refresh" query parameter exists
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('refresh')) {
+    // Reload the page if "refresh" is present
+    location.reload();
+  }
+</script>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+<div class="breadcrumb">
+  <a href="/">Home</a> /
+  <a href="/books/book_list">Browse</a> /
+  <a href="/books/book/{{book.BookID}}">{{ book.Title }}</a>
+  
+</div>
 <div class="search-container" >
   <div class="search-wrapper" >
     <input type="text" class="search-bar" id="search-bar" placeholder="Search..." autocomplete="off">
     <i class="fas fa-search search-icon" id="search-icon"></i>
   </div>
-  <div class="search-results" id="search-results"></div>
 </div>
+
+</div>
+<div class="search-results" id="search-results"></div>
+</div>
+
+</div>
+
 <div class="container">
-  <div class="row justify-content-center">
+  <div class="row justify-content-left ml-4">
     <h1 class="book-title"> {{ book.Title }}</h1>
   </div>
   
@@ -499,64 +836,82 @@ form{
         <img src="{{ book.cover_image.url }}" alt="{{ book.Title }} Cover" class="img-fluid rounded book-cover border border-secondary half-width-img">
       </div>      <div class="left-column">
         <p><strong>Author:</strong> {{ book.Author.AuthorName }}</p>
-        <p><strong>Publication Year:</strong> {{ book.PublicationYear }}</p>
         <p><strong>Categories:</strong> 
           {% for category in book.Categories.all %}
             {{ category.name }}{% if not forloop.last %}, {% endif %}
           {% endfor %}
         </p>
+        <p>
+          <strong>Rating:
+              <span class="rating-star">
+                  <span class="Steaks" style="--rating: {% if book.rating %}{{book.rating}}{% else %}0{% endif %};font-size: 22px;"></span>
+              </span>
+              {% if book.rating %}{{book.rating}}{% else %}0{% endif %} / 5
+          </strong>
+          ({{book.rating_count}} ratings)
+      </p>
+      
         <p><strong>Language:</strong> {{ book.LanguageID.LanguageName }}</p>
-        <p><strong>Price:</strong> ${{ book.Price }}</p>
+        <p><strong>Publication Year:</strong> {{ book.PublicationYear }}</p>
         <p><strong>{{ book.get_identifier_type_display }}: </strong>{{ book.identifier_value }}</p>
+        <p><strong>Price:</strong> ${{ book.Price }}</p>
       </div>
     </div>
     <div class="col-md-8 col-custom-width text-white">
       
       <div class="card bg-dark border border-secondary mb-3">
         <div class="card-header bg-secondary text-white">
-          Description
+          <strong>Description</strong>
         </div>
         <div class="card-body">
           {{ book.Description|linebreaksbr|safe }}
         </div>
       </div>
+      <div class="d-flex justify-content-end align-items-center mt-3">
+        {% if book_in_library %}
+          <span class="badge badge-success" style="font-size:16px;">In Library</span>
+        {% else %}
+          <a href="{% url 'add_to_library' book.BookID %}" class="btn btn-primary">Buy Now</a>
+        {% endif %}
+      </div>
     </div>
   </div>
   <div class="row">
-    <div class="col-md-12">
-      <h2 class="section-title">Rating</h2>
+    <div class="col-md-12 mt-4">
+      <h2 class="section-title text-center">Ratings</h2>
       <!-- Ratings -->
       <div class="row">
         <div class="col-md-3 rating-item">
           <h3>Style</h3>
           <div class="rating-stars">
             <div class="rating">
-              <input type="radio" id="style-star1" name="style-rating" value="5" />
+              <input type="radio" id="style-star1" name="style-rating" value="5" {% if user_review and user_review.style_rating == 5 %}checked{% endif %}/>
               <label for="style-star1" title="5 star"></label>
-              <input type="radio" id="style-star2" name="style-rating" value="4" />
+              <input type="radio" id="style-star2" name="style-rating" value="4" {% if user_review and user_review.style_rating == 4 %}checked{% endif %}/>
               <label for="style-star2" title="4 stars"></label>
-              <input type="radio" id="style-star3" name="style-rating" value="3" />
+              <input type="radio" id="style-star3" name="style-rating" value="3" {% if user_review and user_review.style_rating == 3 %}checked{% endif %}/>
               <label for="style-star3" title="3 stars"></label>
-              <input type="radio" id="style-star4" name="style-rating" value="2" />
+              <input type="radio" id="style-star4" name="style-rating" value="2" {% if user_review and user_review.style_rating == 2 %}checked{% endif %}/>
               <label for="style-star4" title="2 stars"></label>
-              <input type="radio" id="style-star5" name="style-rating" value="1" />
+              <input type="radio" id="style-star5" name="style-rating" value="1" {% if user_review and user_review.style_rating == 1 %}checked{% endif %}/>
               <label for="style-star5" title="1 stars"></label>
             </div>
           </div>
         </div>
+        
         <div class="col-md-3 rating-item">
           <h3>Story</h3>
           <div class="rating-stars">
             <div class="rating">
-              <input type="radio" id="story-star5" name="story-rating" value="5" />
+              <input type="radio" id="story-star5" name="story-rating" value="5" {% if user_review and user_review.story_rating == 5 %}checked{% endif %}/>
               <label for="story-star5" title="5 stars"></label>
-              <input type="radio" id="story-star4" name="story-rating" value="4" />
+              <input type="radio" id="story-star4" name="story-rating" value="4" {% if user_review and user_review.story_rating == 4 %}checked{% endif %}/>
               <label for="story-star4" title="4 stars"></label>
-              <input type="radio" id="story-star3" name="story-rating" value="3" />
+              <input type="radio" id="story-star3" name="story-rating" value="3" {% if user_review and user_review.story_rating == 3 %}checked{% endif %}/>
               <label for="story-star3" title="3 stars"></label>
-              <input type="radio" id="story-star2" name="story-rating" value="2" />
+              <input type="radio" id="story-star2" name="story-rating" value="2" {% if user_review and user_review.story_rating == 2 %}checked{% endif %}/>
               <label for="story-star2" title="2 stars"></label>
-              <input type="radio" id="story-star1" name="story-rating" value="1" />
+              <input type="radio" id="story-star1" name="story-rating" value="1" {% if user_review and user_review.story_rating == 1 %}checked{% endif %}/>
               <label for="story-star1" title="1 star"></label>
             </div>
           </div>
@@ -565,15 +920,15 @@ form{
           <h3>Grammar</h3>
           <div class="rating-stars">
             <div class="rating">
-              <input type="radio" id="grammar-star5" name="grammar-rating" value="5" />
+              <input type="radio" id="grammar-star5" name="grammar-rating" value="5" {% if user_review and user_review.grammar_rating == 5 %}checked{% endif %}/>
               <label for="grammar-star5" title="5 stars"></label>
-              <input type="radio" id="grammar-star4" name="grammar-rating" value="4" />
+              <input type="radio" id="grammar-star4" name="grammar-rating" value="4" {% if user_review and user_review.grammar_rating == 4 %}checked{% endif %}/>
               <label for="grammar-star4" title="4 stars"></label>
-              <input type="radio" id="grammar-star3" name="grammar-rating" value="3" />
+              <input type="radio" id="grammar-star3" name="grammar-rating" value="3" {% if user_review and user_review.grammar_rating == 3 %}checked{% endif %}/>
               <label for="grammar-star3" title="3 stars"></label>
-              <input type="radio" id="grammar-star2" name="grammar-rating" value="2" />
+              <input type="radio" id="grammar-star2" name="grammar-rating" value="2" {% if user_review and user_review.grammar_rating == 2 %}checked{% endif %}/>
               <label for="grammar-star2" title="2 stars"></label>
-              <input type="radio" id="grammar-star1" name="grammar-rating" value="1" />
+              <input type="radio" id="grammar-star1" name="grammar-rating" value="1" {% if user_review and user_review.grammar_rating == 1 %}checked{% endif %}/>
               <label for="grammar-star1" title="1 star"></label>
             </div>
           </div>
@@ -582,15 +937,15 @@ form{
           <h3>Character</h3>
           <div class="rating-stars">
             <div class="rating">
-              <input type="radio" id="character-star5" name="character-rating" value="5" />
+              <input type="radio" id="character-star5" name="character-rating" value="5" {% if user_review and user_review.character_rating == 5 %}checked{% endif %}/>
               <label for="character-star5" title="5 stars"></label>
-              <input type="radio" id="character-star4" name="character-rating" value="4" />
+              <input type="radio" id="character-star4" name="character-rating" value="4" {% if user_review and user_review.character_rating == 4 %}checked{% endif %}/>
               <label for="character-star4" title="4 stars"></label>
-              <input type="radio" id="character-star3" name="character-rating" value="3" />
+              <input type="radio" id="character-star3" name="character-rating" value="3" {% if user_review and user_review.character_rating == 3 %}checked{% endif %}/>
               <label for="character-star3" title="3 stars"></label>
-              <input type="radio" id="character-star2" name="character-rating" value="2" />
+              <input type="radio" id="character-star2" name="character-rating" value="2" {% if user_review and user_review.character_rating == 2 %}checked{% endif %}/>
               <label for="character-star2" title="2 stars"></label>
-              <input type="radio" id="character-star1" name="character-rating" value="1" />
+              <input type="radio" id="character-star1" name="character-rating" value="1" {% if user_review and user_review.character_rating == 1 %}checked{% endif %}/>
               <label for="character-star1" title="1 star"></label>
             </div>
           </div>
@@ -598,37 +953,66 @@ form{
       </div>
       <!-- Overall Rating -->
       <div class="row">
+        
         <div class="col-md-12 overall-rating">
           <h3>Overall Rating</h3>
           <div class="rating-stars overall-stars">
             <div class="rating">
-              <span class="Steaks" style="--rating: 0;" aria-label="Rating of this product is 2.3 out of 5.">
+              <span class="Steaks" id="overall_rat" style="--rating: {% if user_review.overall_rating %}{{user_review.overall_rating}}{% else %}0{% endif %};" >
             </div>
           </div>
         </div>
       </div>
       <!-- Review Section -->
       <div class="row">
+
     <div class="col-md-12">
       <div class="row">
         <div class="col-md-12">
           <h2 class="section-title">Write a Review</h2>
           <form method="POST" action="{% url 'add_review' book_id=book.BookID %}" id="reviewForm">
             {% csrf_token %}
-            <input type="hidden" name="Rating" value="" required>
+            <input type="hidden" name="Rating" {% if user_review.overall_rating %}value="{{user_review.overall_rating}}" {% else %} value="" {% endif %} required>
             <input type="hidden" name="book_id" value="{{book.BookID}}">
             <div class="form-group">
               <label for="reviewTitle">Title</label>
-              <input type="text" class="form-control" name="title" id="reviewTitle" placeholder="Enter review title" required>
+              <input type="text" class="form-control" name="title" id="reviewTitle" placeholder="Enter review title" required
+              {% if user_review %}
+                value="{{ user_review.title }}"
+            {% endif %}
+            {% if user_review %}
+                readonly
+            {% endif %}
+            >
+              <span id="titleError" class="error"></span>
+                  {% if form.title.errors %}
+          <ul class="errorlist">
+            {% for error in form.title.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
             </div>
             <div class="form-group">
               <label for="reviewText">Review</label>
-              <textarea class="form-control" name="review" id="reviewText" rows="4" placeholder="Write your review here" required></textarea>
+              <textarea class="form-control" name="review" id="reviewText" rows="10" placeholder="Write your review here" required{% if user_review %} readonly{% endif %}>{{ user_review.review }}</textarea>
+              <span id="reviewError" class="error"></span>
+              {% if form.review.errors %}
+      <ul class="errorlist">
+        {% for error in form.review.errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
             </div>
             <div class="form-group">
-              <label for="#">Overall Rating: <span id="overall_rating"></span></label>
+              <label for="#">Overall Rating: <span id="overall_rating">{% if user_review.overall_rating %}{{user_review.overall_rating}}{% endif %}</span></label>
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" id="sub_btn" class="btn btn-primary" {% if user_review.overall_rating %}disabled{% endif %}>Submit</button>
+            <button id="toggleEditButton" type="button" class="btn btn-secondary">Toggle Edit</button>
+            {% if user_review %}
+            <button id="deleteReviewButton" type="button" class="btn btn-danger">Delete Review</button>
+            {% endif %}
           </form>
         </div>
       </div>
@@ -637,10 +1021,64 @@ form{
       </div>
     </div>
   </div>
-  
 </div>
+<div class="container mt-4">
+  {% for review in reviews %}
+  <div class="row reviews-container">
+    <!-- Left Column for Ratings -->
+    <div class="col-md-4 mt-4">
+      <div class="ratings-column">
+        <h2 class="mb-3 text-center">
+          <div class="user-profile">
+            {% if profile_image_urls|get_item:review.user.username %}
+          <img src="{{ profile_image_urls|get_item:review.user.username }}" class="dp" alt="">
+          {% else %}
+          <img src="{% static 'img/def_png.png' %}" class="dp" alt="">
+          {% endif %}
+      </div></h2>
+        <!-- Average Rating -->
+        <p>Overall: <span class="Steaks" style="--rating:{{review.overall_rating}} ;"></span></p>
+        <!-- Individual Rating Categories -->
+        <p>Style: <span class="Steaks" style="--rating:{{review.style_rating}} ;"></span></p>
+        <p>Story: <span class="Steaks" style="--rating:{{review.story_rating}} ;"></span></p>
+        <p>Grammar: <span class="Steaks" style="--rating:{{review.grammar_rating}} ;"></span></p>
+        <p>Character: <span class="Steaks" style="--rating:{{review.character_rating}} ;"></span></p>
+        <!-- Add more rating categories as needed -->
+      </div>
+    </div>
 
+    <!-- Right Column for Reviews -->
+    <div class="col-md-8">
+      <!-- User Reviews -->
+      <div class="user-review mb-4 mt-4">
+        <h3>{{review.title}}</h3>
+        <p class="text-muted">By: {{review.user.username}}</p>
+        <p class="text-muted">Date: {{review.reviewed_at}}</p>
+        
+        <div class="review-content">
+            {{review.review}}
+        </div>
+        
+        <button class="btn btn-link read-more-button">Read More</button>
+        <!-- Like button and counter -->
+        <div class="like-container">
+          <div class="like-button">
+              <button class="btn btn-primary{% if review.is_liked %} liked{% endif %}">
+                  {% if review.is_liked %}Unlike{% else %}Like{% endif %}
+              </button>
+              <input type="hidden" class="review_id" value="{{ review.id }}">
+          </div>
+          <div class="like-count">
+              <span id="likes_{{ review.id }}">{{ review.likes_count }}</span> Likes
+          </div>
+      </div>
+      </div>
 
+    </div>
+  </div>
+  <hr>
+  {% endfor %}
+</div>
 
 
 {% endblock content %}

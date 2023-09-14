@@ -1,0 +1,184 @@
+{% extends "user/home.html" %}
+{% block content %}
+<style>
+    /* Dark theme styles */
+    body {
+        background-color: #1a1a1a;
+        color: #fff;
+    }
+    .author-tile {
+        border: 1px solid #555;
+        padding: 10px;
+        margin: 10px;
+        background-color: #444;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    }
+    .author-tile:hover {
+        transform: scale(1.02);
+        background-color: #333; /* Subtle color change on hover */
+    }
+    .author-name {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: #00cc00; /* Vibrant green for author name */
+    }
+    .social-links {
+        list-style-type: none;
+        padding: 0;
+        margin-top: 10px;
+    }
+    .social-link-item {
+        margin-bottom: 5px;
+        font-size: 16px;
+        text-transform: capitalize; /* Convert social handles to title case */
+    }
+    .social-link-item a {
+        color: #fff;
+        text-decoration: none;
+        transition: color 0.2s ease-in-out;
+        margin-right: 10px; /* Adjust the margin as needed */
+    }
+    
+    .social-link-item a:hover {
+        color: #00cc00;
+    }
+    .divider {
+        border-left: 1px solid #555;
+        height: 100%;
+        margin: 0 10px;
+    }
+    /* Improved heading styles */
+    .page-heading {
+        text-align: center;
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #666; /* Greyish color for the heading */
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        padding-top: 10px; /* Added padding top to the heading */
+    }
+    .social-label{
+        font-size:18px;
+        color:#e75480;
+    }
+    .col-md-7 {
+        /* Default style with a left border */
+        border-left: 1.5px solid #fff; /* Thinner border */
+        padding-top: 5px; /* Add padding to the top */
+        margin-left: 5px; /* Add margin to the left */
+    }
+
+    @media (max-width: 767px) {
+        /* Media query for screens less than 768px wide */
+        .col-md-7 {
+            border-left: none; /* Remove the left border */
+            border-top: none; /* Add a top border */
+            padding-top: 10px; /* Adjust padding for top */
+            margin-left: 0; /* Remove margin for left */
+        }
+    }
+    .current-page {
+        padding: 5px 10px;
+        margin: 0 5px;
+        border: none;
+        border-radius: 3px;
+        background-color: #fff; /* Light background color */
+        color: #333; /* Dark text color */
+    }
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .step-links {
+        display: flex;
+    }
+  
+    .step-links a {
+        padding: 5px 10px;
+        margin: 0 5px;
+        border: none;
+        border-radius: 3px;
+        text-decoration: none;
+        color: #fff; /* Light text color */
+        background-color: #333; /* Dark background color */
+        transition: background-color 0.3s, color 0.3s;
+    }
+  
+    .step-links a:hover {
+        background-color: #555; /* Slightly darker background color on hover */
+        color: #fff; /* Light text color on hover */
+    }
+    .auth_image{
+        max-width: 50%; 
+        border: 2px solid #ccc; 
+        border-radius: 30px;
+        margin-bottom:10px;
+    }
+</style>
+<div class="container">
+    <div class="row">
+        <div class="breadcrumb">
+            <a href="/">Home</a> /
+            <a href="/books/authors">Authors</a>
+          </div>
+        </div>
+    <div class="col-md-12 text-center">
+        <div >
+        <h1 class="page-heading ">Authors List</h1></div>
+        {% for author in authors %}
+            <div class="col-md-12">
+                <div class="author-tile">
+                    <div class="row">
+                        <div class="col-md-4 mt-5 ml-5 text-center"> <!-- Added "text-center" class -->
+                            {% if author.profile_image %}
+                            <img src="{{author.profile_image.url}}" alt="Author_Photo" class="auth_image">
+                            {% endif %}
+                            <h2 class="author-name">{{ author.AuthorName }}</h2>
+                            <ul class="social-links">
+                                <li class="social-link-item"><span class="social-label">Socials:-</span> 
+                                    <ul class="social-links">
+                                        <li class="social-link-item">
+                                            {% for link in author.social_media_links.all %}
+                                            <a href="{{ link.link }}" target="_blank">{{ link.platform|title }}</a>
+                                            {% endfor %}
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>Books: {{ author.number_of_works }}</li>
+                                <li style="margin-top:15px;">
+                                    <a href="{% url 'view_works' author_id=author.Author %}" class="btn btn-primary btn-sm">View Works</a>
+                                </li>   
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-7" style="display: flex; flex-direction: column; justify-content: center;">
+                            <h3 style="text-align: center; color: #ADD8E6; font-size: 24px; font-weight: bold;">Bio</h3>
+                            <p class="author-biography">{{ author.Biography }}</p>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="pagination">
+        <span class="step-links">
+            {% if authors.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ authors.previous_page_number }}">previous</a>
+            {% endif %}
+            
+            <span class="current-page">{{ authors.number }}</span>
+            
+            {% if authors.has_next %}
+                <a href="?page={{ authors.next_page_number }}">next</a>
+                <a href="?page={{ authors.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+</div>
+{% endblock content %}

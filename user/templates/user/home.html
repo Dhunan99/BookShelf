@@ -335,7 +335,68 @@
         #bookCarousel{
             min-height:400px;
         }
+        /* Glossy heading styles */
+        .glossy-heading {
+            color: #fff; /* Text color: white */
+            padding: 10px; /* Adjust padding as needed */
+            font-size: 24px; /* Adjust font size as needed */
+            text-align: left; /* Center align text */
+            text-transform: uppercase; /* Convert text to uppercase */
+            letter-spacing: 2px; /* Increase letter spacing for a bold look */
+            border-radius: 8px; /* Rounded corners for the heading */
+            box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.4); /* Add a subtle box shadow */
+        }
+        /* Style for the "Read More" link */
+        .read-more {
+            font-size:16px;
+            display: inline-block;
+            background-color: #007BFF; /* Background color */
+            color: #fff; /* Text color */
+            padding: 5px 10px; /* Padding for the link */
+            text-decoration: none; /* Remove underlines */
+            border-radius: 5px; /* Rounded corners */
+            transition: background-color 0.3s, color 0.3s; /* Smooth transition on hover */
+        }
+
+        /* Hover effect for the "Read More" link */
+        .read-more:hover {
+            background-color: #0056b3; /* Darker background on hover */
+            color: #fff; /* Text color on hover */
+        }
+
+        .breadcrumb {
+            background-color: #1a1a1a; /* Dark background color */
+            padding: 10px;
+            font-size: 16px;
+            color: #999; /* Text color for breadcrumb items */
+        }
         
+        .breadcrumb a {
+            text-decoration: none;
+            color: #007bff; /* Link color for breadcrumb items */
+            margin-left: 10px;
+            margin-right: 5px;
+        }
+        
+        .breadcrumb a:hover {
+            text-decoration: underline;
+            color: #0056b3; /* Hover color for breadcrumb links */
+        }
+        
+        /* Style the separator (in this case, the slash) */
+        .breadcrumb::after {
+            content: " / ";
+            color: #999; /* Separator color */
+            padding: 0 5px;
+        }
+        
+        /* Style the last breadcrumb item */
+        .breadcrumb span {
+            color: #999; /* Last item color */
+        }
+        .breadcrumb a:first-child {
+            margin-left: 0; /* Remove the margin on the last link */
+        }
     </style>
     {% block style %}{% endblock style %}
 </head>
@@ -348,13 +409,13 @@
             <a href="/books/book_list" id="browse">Browse</a>
             <a href="#">Ranking</a>
             <a href="#">Write</a>
-            <a href="#">Author</a>
+            <a href="{% url 'author_list' %}">Author</a>
             <a href="#">Contact</a>
             <a href="#">Forum</a>
         </div>
         <div>
             <div class="navbar-content">
-                    <a href="#">Library</a>
+                    <a href="{% url 'user_library' %}">Library</a>
             </div>
         </div>
         <div>
@@ -382,8 +443,10 @@
     </div>
     {% block content %}
     <div class="container">
-        
-        <h1>Popular Now</h1>
+        <div class="breadcrumb">
+            <a href="/">Home</a>
+        </div>
+        <h1 class="glossy-heading mt-3">Popular Now</h1>
         <div id="bookCarousel" class="carousel slide" data-ride="carousel" data-interval="3000">
             <!-- Wrapper for slides -->
             <div class="carousel-inner">
@@ -399,7 +462,8 @@
                               {{ category.name }}{% if not forloop.last %}, {% endif %}
                           {% endfor %}
                               </p>
-                            <p>Summary: {{ book.Description|truncatechars:500 }}{% if book.Description|length > 200 %} <a href="{% url 'book_detail' book_id=book.BookID %}" class="read-more">Read More</a>{% endif %}</p>
+                            <p>Summary: {{ book.Description|truncatechars:500 }}{% if book.Description|length > 200 %} <a href="{% url 'book_detail' book_id=book.BookID %}" class="read-more">Read More</a>
+                                {% endif %}</p>
                             <h4>Price: ₹{{book.Price|floatformat:"0"}}</h2>
                             <!-- You can add more book details here as needed -->
                         </div>
