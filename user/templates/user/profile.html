@@ -1,4 +1,5 @@
 {% extends 'user/home.html' %}
+{% block title %}<title>Profile</title>{% endblock %}
 {% load static %}   
 {% block style %}
 <script>
@@ -180,6 +181,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const emailInput = document.getElementById('email');
+        email_val=emailInput.value;
         const phoneNumberInput = document.getElementById('phone-number');
         const emailTooltip = document.getElementById('email-error-tooltip');
         const phoneNumberTooltip = document.getElementById('phone-number-error-tooltip');
@@ -225,6 +227,10 @@
             } else {
                 emailTooltip.style.display = 'none'; // Hide the tooltip
                 emailTooltip.textContent = '';
+                if (emailInput.getAttribute('data-live-validation') === 'true') {
+                    liveValidateEmail(email);
+                }
+
             }
             checkAndEnableSubmitButton();
         });
@@ -242,6 +248,20 @@
             }
             checkAndEnableSubmitButton();
         });
+        function liveValidateEmail(email) {
+            fetch(`/user/validate-email/?email=${email}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.is_taken && email_val!=email) {
+                        emailTooltip.style.display = 'block';
+                        emailTooltip.textContent = 'Email is already taken.';
+                    } else {
+                        emailTooltip.style.display = 'none';
+                        emailTooltip.textContent = '';
+                    }
+                    checkAndEnableSubmitButton();
+                });
+        }
     });
     
 </script>
@@ -406,6 +426,9 @@ input[type="radio"]:disabled + label {
                                 </div>
                                 
                             </div>
+                            <div class="form-group mt-3">
+                                <a href="{% url 'change_password' %}" class="btn btn-warning">Change Password</a>
+                            </div>
                                                 
                             <button type="button" class="btn btn-primary edit-button">Edit</button>
                             <button type="submit" class="btn btn-success save-button" style="display: none;">Save</button>
@@ -471,7 +494,7 @@ input[type="radio"]:disabled + label {
                             <input type="hidden" name="form_name" value="contact">
                             <div class="form-group">
                                 <label for="email">E-mail:</label>
-                                <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" disabled>
+                                <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" disabled data-live-validation="true">
                                 <div class="invalid-feedback-icon">
                                     <span id="email-error-tooltip" class="custom-tooltip" style="display: none;">Invalid E-mail</span>
                                 </div>

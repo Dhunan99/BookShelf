@@ -1,5 +1,6 @@
 {% extends "user/home.html" %}
 {% load static %}
+{% block title %}<title>{{book.Title}}</title>{% endblock %}
 {% load custom_filters %}
 {% block style %}
 <style>
@@ -399,6 +400,158 @@ div.ratings-column p{
 }
 .breadcrumb{
   float:left;
+}
+.container1 {
+  width: 80%;
+  margin: 30px auto;
+  text-align: center;
+}
+
+h1 {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
+.list-group-item {
+  background-color: #1e1e1e; /* Darker background color for list items */
+  border: none;
+}
+
+.list-group-item a {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.list-group-item:hover {
+  background-color: #292929; /* Darker background color on hover */
+}
+.chap-list {
+  background-color: #2a2a2a;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius:10px;
+  transition: background-color 0.3s; /* Add a smooth transition effect */
+}
+
+.chap-list:hover {
+  background-color: #3a3a3a; /* Change the background color on hover */
+}
+.scrollable-container {
+  max-height: 500px; /* Set the maximum height for the container */
+  overflow-y: auto; /* Add a vertical scrollbar when content overflows */
+}
+.scrollable-container::-webkit-scrollbar {
+  width: 10px; /* Set the width of the scrollbar */
+}
+
+.scrollable-container::-webkit-scrollbar-thumb {
+  background-color: #333; /* Background color of the thumb (the draggable part) */
+  border-radius: 5px; /* Rounded corners for the thumb */
+}
+
+.scrollable-container::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Background color of the thumb on hover */
+}
+
+.scrollable-container::-webkit-scrollbar-track {
+  background-color: #1a1a1a; /* Background color of the track (the non-draggable part) */
+  border-radius: 5px; /* Rounded corners for the track */
+}
+
+.scrollable-container::-webkit-scrollbar-corner {
+  background-color: #1a1a1a; /* Background color of the corner (if needed) */
+}
+
+.custom-link {
+  text-decoration: none; /* Remove underline */
+  color: inherit; /* Inherit the text color from parent */
+  /* Add any additional styles as needed */
+}
+.custom-link:hover {
+  color: #your_hover_color; /* Change to the desired hover color */
+  text-decoration:none;
+}
+.design-rat{
+  font-size: 24px;
+  font-weight: bold;
+  text-transform: uppercase;
+  border-bottom: 2px solid #333;
+  padding-bottom: 10px;
+  margin-left: 20px;
+}
+.shadow{
+  box-shadow: 0 0rem 0rem rgba(0,0,0,0)!important;
+}
+/* Style for the dark-themed "Report" button */
+.report-button {
+    background-color: #333; /* Dark background color */
+    color: #fff; /* Light text color */
+    border: none;
+    padding: 7px 15px; /* Adjust padding as needed */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer;
+    margin-right:10px;
+}
+
+/* Hover effect */
+.report-button:hover {
+    background-color: #555; /* Darker background color on hover */
+}
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1;
+}
+
+/* Styles for the modal content */
+.modal-content {
+  color:black;
+  background-color: #fff;
+  width: 60%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 5px;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Styles for the close button (X) */
+.close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Style for the textarea and submit button */
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  resize: none;
+}
+
+button#submitReport {
+  background-color: #333;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button#submitReport:hover {
+  background-color: #555;
 }
 </style>
 {% endblock style %}
@@ -802,6 +955,66 @@ div.ratings-column p{
   }
 </script>
 
+<script>
+  $(document).ready(function () {
+    // Get the modal and buttons
+    const reportModal = $("#reportModal");
+    const closeModal = $("#closeModal");
+    const reportButton = $(".report-button");
+    const submitReport = $("#submitReport");
+    const reportReason = $("#reportReason");
+
+    // Show the modal when a "Report" button is clicked
+    reportButton.click(function () {
+        reportModal.css("display", "block");
+        const clickedButtonId = $(this).attr("id");
+      submitReport.attr("data-action", clickedButtonId);
+    });
+
+    // Close the modal when the close button (X) is clicked
+    closeModal.click(function () {
+        reportModal.css("display", "none");
+        $("#error-message123").text("");
+        reportReason.val("");    
+      });
+    const csrfToken = "{{ csrf_token }}";
+    // Send the report via AJAX when the "Submit Report" button is clicked
+    submitReport.click(function () {
+        const reviewId = $(this).attr("data-action").split("_")[1]; // Extract the review ID
+        const reason = reportReason.val(); // Get the report reason from the textarea
+        if (reason.length < 50) {
+          $("#error-message123").text("Please provide at least 50 characters for the report.");
+          return; // Prevent the AJAX request if validation fails
+      }
+        // Send the report to the server via AJAX
+        $.ajax({
+          url: "{% url 'report_review' %}", // Replace with the actual URL
+          type: "POST",
+          data: {
+              review_id: reviewId,
+              reason: reason,
+              csrfmiddlewaretoken: csrfToken,
+          },
+          success: function (data) {
+              // Handle the success response (e.g., display a success message)
+              console.log("Report submitted successfully!");
+              $("#error-message123").text("");
+              reportReason.val("");  
+              reportModal.css("display", "none"); // Close the modal
+          },
+          error: function (xhr, textStatus, errorThrown) {
+              // Handle errors (e.g., display an error message)
+              const responseText = JSON.parse(xhr.responseText);
+              if (responseText.error) {
+                  // Display the error message to the user
+                  $("#error-message123").text(responseText.error);
+              }
+              console.error("Error:", errorThrown);
+          }
+      });
+    });
+});
+</script>
 
 <div class="container">
   <div class="row">
@@ -824,10 +1037,15 @@ div.ratings-column p{
 </div>
 
 </div>
-
+{% if book_in_library %}
+<div style="text-align: right;padding-right:10%;">
+  <span class="badge badge-success" style="font-size:16px; float: right;">In Library</span>
+</div>
+{% endif %}
 <div class="container">
   <div class="row justify-content-left ml-4">
     <h1 class="book-title"> {{ book.Title }}</h1>
+    
   </div>
   
   <div class="row">
@@ -853,12 +1071,32 @@ div.ratings-column p{
       
         <p><strong>Language:</strong> {{ book.LanguageID.LanguageName }}</p>
         <p><strong>Publication Year:</strong> {{ book.PublicationYear }}</p>
+        {% if book.identifier_value %}
         <p><strong>{{ book.get_identifier_type_display }}: </strong>{{ book.identifier_value }}</p>
-        <p><strong>Price:</strong> ${{ book.Price }}</p>
+        {% endif %}
+
+        <p><strong>Price:</strong> ₹ {% if book.Price %}{{ book.Price }}{% else %}0{% endif %}</p>
       </div>
     </div>
     <div class="col-md-8 col-custom-width text-white">
-      
+      {% if chapters %}
+      <div class="container1">
+          <h2>Chapters</h2>
+          <div class="row">
+              <div class="col-md-6 offset-md-3">
+                  <div class="scrollable-container">
+                      <ul class="list-group">
+                          {% for chapter in chapters %}
+                              <li class="list-group-item">
+                                  <a href="{{ chapter.url }}">{{ chapter.title }}</a>
+                              </li>
+                          {% endfor %}
+                            </div>
+              </ul>
+          </div>
+      </div>
+  </div>
+    {% else %}
       <div class="card bg-dark border border-secondary mb-3">
         <div class="card-header bg-secondary text-white">
           <strong>Description</strong>
@@ -866,19 +1104,28 @@ div.ratings-column p{
         <div class="card-body">
           {{ book.Description|linebreaksbr|safe }}
         </div>
-      </div>
+      </div>{% endif %}
       <div class="d-flex justify-content-end align-items-center mt-3">
         {% if book_in_library %}
-          <span class="badge badge-success" style="font-size:16px;">In Library</span>
+          <a href="/books/book/{{book.BookID}}" class="chap-list cusomt" style="margin-left:15px;">Description</a>
+          <form method="get" style="background-color:#1a1a1a;color:white;">
+            <input type="hidden" name="chapter_list" value="True">
+            <button type="submit" class="chap-list">Chapter List</button>
+        </form>
+        {% elif in_cart %}
+        <a href="{% url "cart_view" %}" class="btn btn-success btn-sm" style="margin-right:10px;font-size:18px"><i class="fa-solid fa-cart-shopping"></i></a>
+          <a href="{% url 'pay_home' book_id=book.BookID %}" class="btn btn-primary">Buy Now</a>
         {% else %}
-          <a href="{% url 'add_to_library' book.BookID %}" class="btn btn-primary">Buy Now</a>
+        <a href="{% url 'add_to_cart' book_id=book.BookID %}" class="btn btn-info" style="margin-right:10px;">Add to Cart</a>
+        <a href="{% url 'pay_home' book_id=book.BookID %}" class="btn btn-primary">Buy Now</a>  
         {% endif %}
       </div>
     </div>
+    
   </div>
   <div class="row">
     <div class="col-md-12 mt-4">
-      <h2 class="section-title text-center">Ratings</h2>
+      <h2 class="section-title text-center design-rat">User's Ratings</h2>
       <!-- Ratings -->
       <div class="row">
         <div class="col-md-3 rating-item">
@@ -1022,6 +1269,15 @@ div.ratings-column p{
     </div>
   </div>
 </div>
+<div class="modal" id="reportModal">
+  <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h2>Report Review</h2>
+      <textarea id="reportReason" rows="4" placeholder="Enter your reason for reporting"></textarea>
+      <span id="error-message123" style="color:red;"></span>
+      <button id="submitReport" data-action="">Submit Report</button>
+  </div>
+</div>
 <div class="container mt-4">
   {% for review in reviews %}
   <div class="row reviews-container">
@@ -1029,7 +1285,7 @@ div.ratings-column p{
     <div class="col-md-4 mt-4">
       <div class="ratings-column">
         <h2 class="mb-3 text-center">
-          <div class="user-profile">
+          <div class="user-profile" id="reviewer{{review.user.username}}">
             {% if profile_image_urls|get_item:review.user.username %}
           <img src="{{ profile_image_urls|get_item:review.user.username }}" class="dp" alt="">
           {% else %}
@@ -1046,7 +1302,7 @@ div.ratings-column p{
         <!-- Add more rating categories as needed -->
       </div>
     </div>
-
+    
     <!-- Right Column for Reviews -->
     <div class="col-md-8">
       <!-- User Reviews -->
@@ -1069,6 +1325,11 @@ div.ratings-column p{
               <input type="hidden" class="review_id" value="{{ review.id }}">
           </div>
           <div class="like-count">
+            {% if user.is_authenticated %}
+            {% if user.username != review.user.username %}
+            <button class="report-button" id="report_{{ review.id }}">Report</button> 
+            {% endif %}
+            {% endif %}
               <span id="likes_{{ review.id }}">{{ review.likes_count }}</span> Likes
           </div>
       </div>

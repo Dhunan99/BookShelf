@@ -46,6 +46,7 @@ JAZZMIN_SETTINGS = {
     ],
 }
 INSTALLED_APPS = [
+    'ebooklib',
     'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'user.apps.UserConfig',
     'books.apps.BooksConfig',
+    'payment.apps.PaymentConfig',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -76,7 +78,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'crispy_forms',
 ]
-
+RAZOR_KEY_ID = 'rzp_test_cNVyoaHhdX2eSa'
+RAZOR_KEY_SECRET = 'mPs9oIn4tXgUpzCtlJ8p7zFv'
 ROOT_URLCONF = 'BookShelf.urls'
 
 TEMPLATES = [

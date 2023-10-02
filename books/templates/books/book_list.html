@@ -1,4 +1,6 @@
 {% extends "user/home.html" %}
+{% load custom_filters %}
+{% block title %}{% block childtitle %}<title>Browse</title>{% endblock childtitle %}{% endblock %}
 {% block style %}
 <style>
   /* Custom styles for smaller cards */
@@ -209,16 +211,49 @@ div.search-results-item:hover{
   transition: transform 0.3s; /* Add the same transition effect */
 }
 
+#items_per_page_select {
+  width: 100px; /* Adjust the width as needed */
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #555; /* Border color */
+  background-color: #333; /* Background color */
+  color: #fff; /* Text color */
+}
 
+/* Styling for the submit button */
+#submit_button {
+  padding: 5px 10px; /* Adjust padding as needed */
+  font-size: 14px;
+  background-color: #007BFF; /* Button background color */
+  color: #fff; /* Button text color */
+  border: none; /* Remove button border */
+  cursor: pointer; /* Add a pointer cursor on hover */
+}
 
-</style>
-
-</style>
-
-</style>
-
-
-
+/* Apply hover effect to the submit button */
+#submit_button:hover {
+  background-color: #0056b3; /* Hover background color */
+}
+label[for="items_per_page"] {
+  color: #fff; /* Label text color */
+  margin-right: 10px; /* Add spacing between label and dropdown */
+}
+.library-heading {
+  font-size: 24px; /* Adjust the font size as needed */
+  font-weight: bold;
+  color: grey; /* Text color */
+  text-transform: uppercase; /* Uppercase text */
+  border-bottom: 2px solid #333; /* Add a bottom border */
+  padding-bottom: 10px; /* Space between text and border */
+  margin-left: 20px; /* Adjust the left margin as needed */
+}
+.checkmark {
+  position: absolute;
+  top: 10px; /* Adjust the top position as needed */
+  right: 10px; /* Adjust the right position as needed */
+  font-size: 20px; /* Adjust the font size as needed */
+  color: white; /* Change the color of the checkmark */
+}
 </style>
 
 {% endblock style %}
@@ -316,6 +351,9 @@ div.search-results-item:hover{
 <div class="breadcrumb">
   <a href="/">Home</a> /
   <a href="/books/book_list">Browse</a>
+  {% if category %}/ 
+  <a href="">{{category}}</a>
+  {% endif %}
 </div>
 <nav class="navbar navbar-expand-lg navbar-dark category-bar">
   <div class="container justify-content-center"> <!-- Add justify-content-center class here -->
@@ -331,7 +369,7 @@ div.search-results-item:hover{
         </li>
         {% endfor %}
         <button class="btn btn-link btn-sm" type="button" data-toggle="collapse" data-target="#allCategories" aria-expanded="false" aria-controls="allCategories">
-          <spa class="navbar-toggler-icon"></spa>
+          <span class="navbar-toggler-icon"></span>
         </button>
         
         <!-- Add more category items here -->
@@ -344,7 +382,7 @@ div.search-results-item:hover{
 </nav>
 <div class="search-container">
   <div class="search-wrapper">
-    <input type="text" class="search-bar" id="search-bar" placeholder="Search..." autocomplete="off">
+    <input type="text" class="search-bar" id="search-bar" placeholder="Search by title" autocomplete="off">
     <i class="fas fa-search search-icon" id="search-icon"></i>
   </div>
   <div class="search-results" id="search-results"></div>
@@ -373,25 +411,49 @@ div.search-results-item:hover{
 
     </div>
   </div>
+  <h3 class="text-left mb-4 library-heading">Books Catalogue</h3>
+  <form method="get" id="items_per_page_form">
+    <label for="items_per_page">Books per page:</label>
+    <select name="items_per_page" id="items_per_page_select">
+        <option value="2" {% if items_per_page == "2" %}selected{% endif %}>2</option>
+        <option value="4" {% if items_per_page == "4" %}selected{% endif %}>4</option>
+        <option value="6" {% if items_per_page == "6" or items_per_page == 6 %}selected{% endif %}>6</option>
+        <option value="8" {% if items_per_page == "8" %}selected{% endif %}>8</option>
+        <option value="10" {% if items_per_page == "10" %}selected{% endif %}>10</option>
+    </select>
+    <input type="submit" value="Apply" id="submit_button">
+</form>
   <div class="row" style="min-height:293px;">
+    
     {% for book in books %}
       <div class="col-md-6 mb-4">
         <div class="card">
+          {% if book.in_library %}
+                <span class="badge badge-success checkmark">✔</span>
+            {% endif %}
           <div class="card-body">
-            <img src="{{ book.cover_image.url }}" alt="{{ book.Title }} Cover" class="book-cover">
+            <img src="{{ book.book.cover_image.url }}" alt="{{ book.book.Title }} Cover" class="book-cover">
             <div>
-              <h5 class="card-title">{{ book.Title }}</h5>
-              <p><strong>Author:</strong> {{ book.Author.AuthorName }}</p>
-              <p><strong>Language:</strong> {{ book.LanguageID.LanguageName }}</p>
+              <h5 class="card-title">{{ book.book.Title }}</h5>
+              <p><strong>Author:</strong> {{ book.book.Author.AuthorName }}</p>
+              <p><strong>Language:</strong> {{ book.book.LanguageID.LanguageName }}</p>
               <p><strong>Categories:</strong> 
-                {% for category in book.Categories.all %}
+                {% for category in book.book.Categories.all %}
                   {{ category.name }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
               </p>
-              <p><strong>Price:</strong> {{ book.Price }}</p>
-              <a href="{% url 'book_detail' book_id=book.BookID %}" class="btn btn-success btn-sm">View Details</a>
+              <p><strong>Price:</strong> {{ book.book.Price }}</p>
+              <a href="{% url 'book_detail' book_id=book.book.BookID %}" class="btn btn-success btn-sm">View Details</a>
+              {% if not book.in_library %}
+                {% if book.in_cart %}
+                  <a href="{% url "cart_view" %}" class="btn btn-success btn-sm"><i class="fa-solid fa-cart-shopping"></i></a>
+                {% else %}
+                  <a href="{% url 'add_to_cart' book_id=book.book.BookID %}" class="btn btn-primary btn-sm">Add to Cart</a>
+                {% endif %}
+              
+              {% endif %}
               {% if user.is_superuser %}
-                <a href="{% url 'delete_book' book.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                <a href="{% url 'delete_book' book.book.pk %}" class="btn btn-danger btn-sm">Delete</a>
               {% endif %}
             </div>
           </div>
@@ -399,18 +461,18 @@ div.search-results-item:hover{
       </div>
     {% endfor %}
   </div>
-  <div class="pagination">
+  <div class="pagination">  
     <span class="step-links">
         {% if books.has_previous %}
-            <a href="?page=1">&laquo; first</a>
-            <a href="?page={{ books.previous_page_number }}">previous</a>
+            <a href="?page=1&items_per_page={{ items_per_page }}">&laquo; first</a>
+            <a href="?page={{ books.previous_page_number }}&items_per_page={{ items_per_page }}">previous</a>
         {% endif %}
         
         <span class="current-page">{{ books.number }}</span>
         
         {% if books.has_next %}
-            <a href="?page={{ books.next_page_number }}">next</a>
-            <a href="?page={{ books.paginator.num_pages }}">last &raquo;</a>
+            <a href="?page={{ books.next_page_number }}&items_per_page={{ items_per_page }}">next</a>
+            <a href="?page={{ books.paginator.num_pages }}&items_per_page={{ items_per_page }}">last &raquo;</a>
         {% endif %}
     </span>
 </div>

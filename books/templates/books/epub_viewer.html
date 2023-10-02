@@ -1,0 +1,56 @@
+{% extends "books/book_detail.html" %}
+{% load static %}
+
+
+{% block content1 %}
+<style>
+    /* Dark theme styles */
+    body {
+        background-color: #121212; /* Dark background color */
+        color: #ffffff; /* Light text color */
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container1 {
+        width: 80%;
+        margin: 30px auto;
+        text-align: center;
+    }
+
+    h1 {
+        font-size: 36px;
+        margin-bottom: 20px;
+    }
+
+    .list-group-item {
+        background-color: #1e1e1e; /* Darker background color for list items */
+        border: none;
+    }
+
+    .list-group-item a {
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .list-group-item:hover {
+        background-color: #292929; /* Darker background color on hover */
+    }
+</style>
+<div class="container1">
+    <h1>{{ book }}</h1>
+    <h2>Chapters</h2>
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <ul class="list-group">
+                {% for chapter in chapters %}
+                    <li class="list-group-item">
+                        <a href="{{ chapter.url }}">{{ chapter.title }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock content1 %}

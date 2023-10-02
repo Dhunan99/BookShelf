@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error</title>
+</head>
+<body>
+    <h1>Error</h1>
+    <p>Sorry, an error occurred while processing your request.</p>
+    
+    {% if error_message %}
+        <p>Error Message: {{ error_message }}</p>
+    {% endif %}
+    
+    {% if debug %}
+        <p>This error is being displayed because DEBUG is set to True.</p>
+    {% else %}
+        <p>This error is being displayed because DEBUG is set to False.</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,477 @@
+{% extends "user/home.html" %}
+{% block style %}
+<style>
+    .content1,.contents {
+        text-align: center; /* Center align the content */
+        /* Add padding around the content */
+        padding-left:10%;
+        padding-right:10%;
+        padding-top:15px;
+        padding-bottom:15px;
+        min-height:500px;
+        font-family: 'Verdana', sans-serif;
+    }
+    .contents{
+        text-align: justify;
+
+    }
+    .bg-white{
+        background-color:white;
+        color:black;
+    }
+    h1 a .bg{
+        text-align:center;
+        font-size: 32px; /* Increase the font size for the title */
+        font-weight: bold; /* Make the title bold */
+        margin-bottom: 20px; /* Add some spacing below the title */
+        color: white; /* Set a custom color for h1 tags (replace with your desired color) */
+    }
+    h1{
+        text-align:center;
+        margin-bottom: 5%;
+    }
+    /* Increase the font size and line height for the content */
+    p {
+        font-size: 18px;
+        line-height: 1.6;
+    }
+    .content1 a {
+        color:white;
+
+    }
+    .navigation-buttons {
+        text-align: center;
+        margin-top: 20px;
+        display: flex; /* Use flexbox */
+        justify-content: space-between; /* Space the buttons evenly */
+        padding-bottom:10px;
+    }
+    
+    .prev-button,
+    .next-button {
+        padding: 10px 20px;
+        background-color: #333;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+    
+    .prev-button:hover,
+    .next-button:hover {
+        background-color: #555;
+    }
+    .contents{
+        pointer-events: none;
+    }
+    .book-details {
+        text-align: center;
+        padding: 20px;
+        background-color: #292929;
+        color: #fff;
+    }
+
+    .book-title {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .author-name {
+        font-size: 18px;
+        font-style: italic;
+    }
+    /* Dark theme styling for the options panel */
+.options-panel {
+    display: none;
+    background-color: #222; /* Dark background color */
+    color: #fff; /* Text color */
+    padding: 10px;
+    position: fixed;
+    top: 300px;
+    right: 280px;
+    border: 1px solid #444; /* Darker border color */
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4); /* Slightly stronger box shadow */
+    user-select: none;
+}
+
+.options-panel h2 {
+    color: #fff; /* Heading text color */
+    font-size: 18px; /* Heading font size */
+    margin-bottom: 10px; /* Spacing below heading */
+}
+
+.options-panel label {
+    color: #ccc; /* Label text color */
+}
+
+.options-panel select,
+.options-panel input[type="number"] {
+    background-color: #333; /* Input background color */
+    color: #fff; /* Input text color */
+    border: 1px solid #444; /* Darker input border color */
+    border-radius: 3px; /* Slightly rounded input borders */
+    padding: 5px; /* Padding inside inputs */
+    margin-top: 5px; /* Spacing between inputs */
+}
+.options-panel input[type="number"]::-webkit-inner-spin-button,
+.options-panel input[type="number"]::-webkit-outer-spin-button,
+.options-panel input[type="number"]::-webkit-clear-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+.options-panel select:focus,
+.options-panel input[type="number"]:focus {
+    outline: none; /* Remove focus outline */
+}
+
+    /* Custom styling for the Options button in dark theme */
+.options-button {
+    background-color: #333; /* Dark background color */
+    color: #fff; /* Text color */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Padding around the button */
+    border-radius: 5px; /* Rounded corners */
+    font-weight: bold; /* Bold text */
+    cursor: pointer; /* Show pointer cursor on hover */
+    margin-top: 20px;
+    margin-right: 10px; /* Add a slight margin-right */
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4); /* Add a box shadow */
+}
+    
+    .options-button:hover {
+        background-color: #555; /* Darker background color on hover */
+    }
+    
+.adjust-button{
+    font-size:25px;
+    padding:5px;
+}
+.adjust-button:hover {
+    cursor: pointer; /* Change the cursor to a pointer on hover */
+    background-color: #555; /* Darker background color on hover */
+    color: #fff; /* Text color on hover */
+}
+    
+#reading-progress-bar {
+    height: 5px;
+    background-color: red;
+    width: 0%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    transition: width 0.3s;
+}
+
+</style>
+<script>
+    function toggle_options() {
+        const optionsButton = document.getElementById('options-button');
+        const optionsPanel = document.getElementById('options-panel'); // Define optionsPanel within the function
+        if (optionsPanel.style.display === 'block' || optionsPanel.style.display === '') {
+            optionsPanel.style.display = 'none';
+        } else {
+            optionsPanel.style.display = 'block';
+        }
+    }
+</script>
+<script>
+    // Function to get and update font-size, content padding, and line spacing
+    function updateOptionsFromContent() {
+        const content = document.querySelector('.contents');
+        const paragraphs = content.querySelectorAll('p');
+
+        // Get font size from the first paragraph (assuming all paragraphs have the same font size)
+        const fontSize = window.getComputedStyle(paragraphs[0]).getPropertyValue('font-size');
+        
+        // Get content padding and line height from the content div
+        const contentPadding = window.getComputedStyle(content).getPropertyValue('padding-left');
+        const lineHeight = window.getComputedStyle(content).getPropertyValue('line-height');
+
+        // Set the values in the corresponding input fields
+        document.getElementById('font-size').value = parseInt(fontSize);
+        document.getElementById('content-padding').value = parseInt(contentPadding);
+        document.getElementById('line-spacing').value = parseFloat(lineHeight);
+    }
+
+    // Call the function on page load
+    window.addEventListener('load', updateOptionsFromContent);
+</script>
+<!-- Add these scripts within your HTML file, preferably in the head section -->
+<script>
+    // Function to increment the value of an input field
+    function incrementValue(inputId, step, min, max) {
+        var input = document.getElementById(inputId);
+        var value = parseInt(input.value);
+        value = isNaN(value) ? min : value;
+        value += step;
+        value = Math.min(Math.max(value, min), max);
+        input.value = value;
+        updateStyles(); // Update styles when the value changes
+    }
+
+    // Function to decrement the value of an input field
+    function decrementValue(inputId, step, min, max) {
+        var input = document.getElementById(inputId);
+        var value = parseInt(input.value);
+        value = isNaN(value) ? min : value;
+        value -= step;
+        value = Math.min(Math.max(value, min), max);
+        input.value = value;
+        updateStyles(); // Update styles when the value changes
+    }
+
+    function updateStyles() {
+        // Get the updated values from the input fields
+        const fontSize = parseInt(document.getElementById('font-size').value);
+        const contentPadding = parseInt(document.getElementById('content-padding').value);
+        const lineSpacing = parseFloat(document.getElementById('line-spacing').value);
+
+        // Select the content element
+        const content = document.querySelector('.contents');
+        const paragraphs = document.querySelectorAll('.contents p');
+        // Update the styles of the content
+        paragraphs.forEach(paragraph => {
+            paragraph.style.fontSize = fontSize + 'px';
+            paragraph.style.lineHeight = lineSpacing+'px';
+        });
+        content.style.paddingLeft = contentPadding + 'px';
+        content.style.paddingRight = contentPadding + 'px';
+        localStorage.setItem('fontSize', fontSize);
+        localStorage.setItem('contentPadding', contentPadding);
+        localStorage.setItem('lineSpacing', lineSpacing);
+
+        // You can add more style updates here based on your requirements
+    }
+</script>
+<script>
+    function changeFontFamily() {
+    
+        // Get the selected font family value from the select element
+        const fontSelect = document.getElementById('font-style');
+        const selectedFontFamily = fontSelect.value;
+    
+        // Apply the selected font family to the containers
+        const containers = document.querySelectorAll('.contents, p');
+        containers.forEach(function(container) {
+            container.style.fontFamily = selectedFontFamily;
+        });
+    
+        localStorage.setItem('fontFamily', selectedFontFamily);
+    }
+    
+</script>
+<script>
+    $(document).ready(function() {
+        // Get references to the select element and containers
+        const $fontSelect = $('#font-style');
+        const $containers = $('.contents, p'); // Adjust the selector as needed
+    
+        // Define the changeFontFamily function
+        
+    
+        // Listen for changes in the select element and call changeFontFamily when it changes
+        $fontSelect.on('change', changeFontFamily);
+    });
+    
+
+</script>
+<script>
+    // Function to toggle between dark and light themes
+    function toggleTheme() {
+        const themeSelect = document.getElementById('theme');
+        const selectedTheme = themeSelect.value;
+    
+        const contentContainer = document.querySelector('.contents');
+        const h1Elements = contentContainer.querySelectorAll('h1'); // Select all h1 tags within .contents
+        const aTags = contentContainer.querySelectorAll('h1 a'); // Select all a tags within h1 elements
+    
+        const optionsButton = document.querySelector('#options-button');
+    
+        if (selectedTheme === 'light') {
+            contentContainer.classList.add('bg-white');
+            // Change font color of h1 tags and their child a tags to black
+            h1Elements.forEach(function (h1) {
+                h1.style.color = 'black';
+                const aTagsWithinH1 = h1.querySelectorAll('a');
+                aTagsWithinH1.forEach(function (a) {
+                    a.style.color = 'black';
+                });
+            });
+            localStorage.setItem('selectedTheme', 'light');
+
+
+            // Update options button styles for light theme
+
+        } else if (selectedTheme === 'dark') {
+            contentContainer.classList.remove('bg-white');
+            // Change font color of h1 tags and their child a tags back to their original color (if any)
+            h1Elements.forEach(function (h1) {
+                h1.style.color = ''; // Remove inline style to revert to CSS-defined color
+                const aTagsWithinH1 = h1.querySelectorAll('a');
+                aTagsWithinH1.forEach(function (a) {
+                    a.style.color = '';
+                });
+            });
+            localStorage.setItem('selectedTheme', 'dark');
+            // Update options button styles for dark theme
+
+        }
+    }
+    
+    
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const themeSelect = document.getElementById('theme');
+
+        // Add an event listener to detect theme changes`   `
+        themeSelect.addEventListener('change', function () {
+            toggleTheme();
+        });
+        // Apply the default dark theme initially
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const themeSelect = document.getElementById('theme');
+        const savedTheme = localStorage.getItem('selectedTheme'); 
+        if (savedTheme) {
+            for (let i = 0; i < themeSelect.options.length; i++) {
+                const option = themeSelect.options[i];
+                // Step 3: Check if the option's value matches the stored value
+                if (option.value === savedTheme) {
+                    // Set the 'selected' property of the matching option to true
+
+                    option.selected = true;
+                    toggleTheme();
+                    break; // Exit the loop once a match is found
+                }
+            }
+ // Apply the saved theme
+        }
+    const savedFontSize = localStorage.getItem('fontSize');
+    const savedContentPadding = localStorage.getItem('contentPadding');
+    const savedLineSpacing = localStorage.getItem('lineSpacing');
+    const savedFontFamily=localStorage.getItem('fontFamily');
+    // Select the input elements for fontSize, contentPadding, and lineSpacing
+    const fontSizeInput = document.getElementById('font-size');
+    const contentPaddingInput = document.getElementById('content-padding');
+    const lineSpacingInput = document.getElementById('line-spacing');
+    const fontSelect = document.getElementById('font-style');
+    // Set the input values to the saved values (if available)
+    if (savedFontSize !== null) {
+        fontSizeInput.value = savedFontSize;
+    }
+    if (savedContentPadding !== null) {
+        contentPaddingInput.value = savedContentPadding;
+    }
+    if (savedLineSpacing !== null) {
+        lineSpacingInput.value = savedLineSpacing;
+    }
+    updateStyles();
+
+    for (let i = 0; i < fontSelect.options.length; i++) {
+        const option = fontSelect.options[i];
+        if (option.value === savedFontFamily) {
+            option.selected = true;
+            break; // Exit the loop once a match is found
+        }
+    }
+    changeFontFamily();
+    });
+
+
+</script>
+<script>
+    // JavaScript for the reading progress bar
+    window.addEventListener('load', function() {
+        const progressBar = document.getElementById('reading-progress-bar');
+        const contents = document.querySelector('.contents');
+        
+        function updateReadingProgressBar() {
+            const scrollPosition = window.scrollY;
+            const contentHeight = contents.clientHeight - window.innerHeight;
+            const progress = (scrollPosition / contentHeight) * 100;
+            progressBar.style.width = progress + '%';
+        }
+        
+        window.addEventListener('scroll', updateReadingProgressBar);
+    });
+</script>
+{% endblock style %}
+
+
+{% block content %}
+<div id="reading-progress-bar"></div>
+<div class="content1">
+    <div class="book-details">
+        <div class="book-title"><a href="/books/book/{{book.BookID}}/">{{ book.Title }}</a></div>
+        <div class="author-name"><a href="/books/author_works/{{book.Author.pk}}/">{{ book.Author }}</a></div>
+        <div class="options-panel" id="options-panel">
+            <h2>Options</h2>
+            <div>
+                <label for="font-style">Font Family:</label>
+                <select id="font-style">
+                    <option value="verdana">Verdana</option>
+                    <option value="calibri">Calibri</option>
+                    <option value="opensans">Open Sans</option>
+                    <option value="arial">Arial</option>
+                    <option value="timesnewroman">Times New Roman</option>
+                </select>
+                
+        </div>
+        <div>
+            <label for="theme">Theme:</label>
+            <select id="theme">
+                <option value="dark">Dark Theme</option>
+                <option value="light">Light Theme</option>
+            </select>
+        </div>
+        <div>
+            <label for="font-size">Font Size:</label>
+            <div class="adjustable-value">
+                <span class="adjust-button" id="font-size-decrease" onclick="decrementValue('font-size', 2, 8, 30)">-</span>
+                <input type="number" id="font-size" min="10" max="150" value="">
+                <span class="adjust-button" id="font-size-increase" onclick="incrementValue('font-size', 2, 8, 30)">+</span>
+            </div>
+        </div>
+        <div>
+            <label for="content-padding">Content Padding:</label>
+            <div class="adjustable-value">
+                <span class="adjust-button" id="content-padding-decrease" onclick="decrementValue('content-padding', 5, 7, 250)">-</span>
+                <input type="number" id="content-padding" min="0" max="150" value="">
+                <span class="adjust-button" id="content-padding-increase" onclick="incrementValue('content-padding', 5, 7, 250)">+</span>
+            </div>
+        </div>
+        <div>
+            <label for="line-spacing">Line Spacing:</label>
+            <div class="adjustable-value">
+                <span class="adjust-button" id="line-spacing-decrease" onclick="decrementValue('line-spacing', 2, 14, 40)">-</span>
+                <input type="number" id="line-spacing" min="1" max="150" value="">
+                <span class="adjust-button" id="line-spacing-increase" onclick="incrementValue('line-spacing', 2, 14, 40)">+</span>
+            </div>
+        </div>
+        </div>
+        
+    </div>
+    
+    <div class="navigation-buttons">
+        {% if prev_chapter %}
+        <a href="{{ prev_chapter }}" class="prev-button">Previous</a>
+        {% endif %}
+        <a href="/books/book/9/?chapter_list=True" class="prev-button">TOC</a>
+        {% if next_chapter %}
+        <a href="{{ next_chapter }}" class="next-button">Next</a>
+        {% endif %}
+    </div>
+    <button class="options-button" id="options-button" style="float:right;" onclick="toggle_options()">Options</button>
+    <div class="contents">{{ chapter_content|safe }}</div>
+    
+    <div class="navigation-buttons">
+        <a href="{{ prev_chapter }}" class="prev-button">Previous</a>
+        <a href="{{ next_chapter }}" class="next-button">Next</a>
+    </div>
+</div>
+{% endblock content %}

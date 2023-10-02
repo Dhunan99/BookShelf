@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 # class Member(models.Model):
 #     UserName=models.CharField(max_length=26)
 #     Email=models.EmailField()
@@ -31,3 +33,68 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
     
+
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shopping_carts')
+    items = models.ManyToManyField('books.Books', blank=True, related_name='carts')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"Shopping cart for {self.user.username}"
+    
+    def update_total_price(self):
+        # Calculate the total price of the items in the cart
+        total_price = sum(book.Price for book in self.items.all())
+        
+        # Update the total_price field with the calculated value
+        self.total_price = total_price
+        self.save()
+        
+
+class PurchaseHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='purchase_histories')
+    items = models.ManyToManyField('books.Books', related_name='purchases')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    purchase_date = models.DateTimeField()
+
+    def __str__(self):
+        return f"Purchase history for {self.user.username} - {self.purchase_date}"
+    class Meta:
+        verbose_name_plural="Purchase Histories"
+
+class NotificationType(models.TextChoices):
+    LIKE = 'like', 'Like'
+    MESSAGE = 'message', 'Message'
+    FRIEND_REQUEST = 'friend_request', 'Friend Request'
+    # Add more notification types as needed
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications', null=True, blank=True)
+    notification_type = models.CharField(max_length=20, choices=NotificationType.choices)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    extra_content=models.CharField(max_length=50, blank=True,null=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ('-timestamp',)
+
+    def __str__(self):
+        return f'{self.sender} to {self.recipient}: {self.get_notification_type_display()}'
+
+    def mark_as_read(self):
+        self.is_read = True
+        self.save()
+
+    @property
+    def notification_message(self):
+        if self.notification_type == NotificationType.LIKE:
+            return f"{self.sender} liked your review for '{self.extra_content}'"
+        elif self.notification_type == NotificationType.MESSAGE:
+            return f'You have a new message from {self.sender}.'
+        elif self.notification_type == NotificationType.FRIEND_REQUEST:
+            return f'{self.sender} sent you a friend request.'
+        # Add more notification messages as needed

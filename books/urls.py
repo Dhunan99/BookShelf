@@ -19,5 +19,12 @@ urlpatterns = [
     path('author_works/<int:author_id>/', views.view_works, name='view_works'),
     path('author_works/<int:author_id>/<str:category>/', views.view_works, name='view_works'),
     path('filter_books_by_author/', views.filter_books_by_author, name='filter_books_by_author'),
+    path('<int:book_id>/chapter/<path:chapter_number>/', views.chapter_view, name='chapter_view'),
+    path('add_to_cart/<int:book_id>/', views.add_to_cart, name='add_to_cart'),
+    path('remove_from_cart/<int:book_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('report-review/', views.report_review, name='report_review'),
+    path('reports/', views.report_list, name='report_list'),
+    path('dismiss_report/', views.dismiss_report, name='dismiss_report'),
+    path('delete_review_2/', views.delete_review_2, name='delete_review_2'),
 
 ]

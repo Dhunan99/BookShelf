@@ -1,0 +1,49 @@
+{% extends "user/home.html" %}
+{% block content %}
+<style>
+    .container1 {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: #fff; /* Text color */
+    }
+
+    .stats-container1 {
+        text-align: center;
+        padding: 20px;
+        background-color: #444; /* Container background color */
+        border-radius: 10px; /* Rounded corners */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Box shadow for container */
+    }
+
+    h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    p {
+        font-size: 18px;
+        margin: 10px 0;
+    }
+    hr {
+        border-top: 1px solid #fff; /* White border color */
+        margin: 20px 0; /* Add margin to separate it from the content */
+    }
+</style>
+
+<div class="container1">
+    <div class="stats-container1">
+        <h1>Statistics</h1><hr >
+        <p>Total Users: {{ user_count }}</p>
+        <p>Total Books: {{ book_count }}</p>
+        <p>Total Authors: {{ author_count }}</p>
+        <p>Total Languages: {{ language_count }}</p>
+        <p>Total Categories: {{ category_count }}</p>
+        <p>Total Tags: {{ tag_count }}</p>
+        <p>Total Reviews: {{ review_count }}</p>
+        <p>Total Likes: {{ like_count }}</p>
+        <p>Total Social Media Links: {{ social_links }}</p>
+    </div>
+</div>
+{% endblock content %}

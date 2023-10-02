@@ -10,13 +10,16 @@ from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib.auth.models import User
-from .models import OTPModel
+from .models import OTPModel,ShoppingCart,PurchaseHistory,Notification
 from pyotp import TOTP
 from django.http import JsonResponse
 import secrets
 from django.core.mail import send_mail
+from django.contrib.auth.views import PasswordChangeView
 from books.models import Books
 from django.views.decorators.csrf import csrf_exempt
+from django.template.loader import render_to_string
+
   # Import User model
 # from django.contrib import messages
 # from django.contrib.auth import authenticate, login
@@ -49,6 +52,33 @@ def login(request):
         else:
             error_message = "Invalid login credentials"
     return render(request, 'user/login.html',{'error':error_message})
+
+@login_required  # Add this decorator to ensure the user is authenticated
+def mark_notifications_as_read(request):
+    if request.method == 'POST':
+        Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+        return JsonResponse({'message': 'Notifications marked as read successfully'})
+    else:
+        return JsonResponse({'message': 'Invalid request method'}, status=400)
+
+def notifications_view(request):
+    user = request.user
+    unread_notifications = Notification.objects.filter(recipient=user, is_read=False).order_by('-timestamp')
+    # Mark notifications as read when the user views them
+    # for notification in unread_notifications:
+    #     notification.mark_as_read()
+
+    # Create a list of notification messages
+    if unread_notifications:
+        notification_messages = [notification.notification_message for notification in unread_notifications]
+    else:
+        notification_messages = ["No notifications at the moment"]
+    # Render the notification messages to HTML
+    notification_html = render_to_string('notifications.html', {'notification_messages': notification_messages})
+    unread_count = unread_notifications.count()
+
+    # Return the notification messages as a JSON response
+    return JsonResponse({'notification_messages': notification_html,'unread_count': unread_count})
 
 def register(request):
         if request.user.is_authenticated:
@@ -107,6 +137,9 @@ def send_otp_email(to_email, otp):
     from_email = 'midhunkrishnanm2024@mca.ajce.in'  # Replace with your email
     send_mail(subject, message, from_email, [to_email])
 
+class ChangePasswordView(PasswordChangeView):
+    template_name = 'user/change_password.html'  # Create a template for the change password page
+    success_url = reverse_lazy('user_profile')  # Redirect to the profile page after successfully changing the password
 
 def validate_username(request):
     username = request.GET.get('username', None)
@@ -146,14 +179,29 @@ def validate_username(request):
 def home(request):
      # Fetch book data from the Books model
     books = Books.objects.filter(tags__name='Popular')  # You can also filter or order the data as needed
+    user_cart = ShoppingCart.objects.filter(user=request.user).first()
+    if user_cart:
+        cart_item_count = user_cart.items.count()
+    else:
+            # If the user doesn't have a cart, set item count to 0
+        cart_item_count = 0
     context = {
         'books': books,
+        'cart_item_count':cart_item_count,
+
     }
+    
     return render(request,'user/home.html',context)
 
 @login_required
 def user_profile(request):
-     return render(request,'user/profile.html')
+    user_cart = ShoppingCart.objects.filter(user=request.user).first()
+    if user_cart:
+        cart_item_count = user_cart.items.count()
+    else:
+            # If the user doesn't have a cart, set item count to 0
+        cart_item_count = 0
+    return render(request,'user/profile.html',{'cart_item_count':cart_item_count})
 
 @login_required
 def save_profile(request):
@@ -190,6 +238,53 @@ def save_profile(request):
                 form.save()
     
     return redirect('/user/profile')
+
+def validate_email(request):
+    email = request.GET.get('email')
+    is_taken = User.objects.filter(email=email).exists()
+    return JsonResponse({'is_taken': is_taken})
+
+def cart_view(request):
+    # Check if the user is authenticated
+    if request.user.is_authenticated:
+        # Use get_or_create to retrieve the user's shopping cart or create a new one
+        shopping_cart, created = ShoppingCart.objects.get_or_create(user=request.user)
+
+        cart_items = shopping_cart.items.all()
+        total_price = shopping_cart.total_price
+    else:
+        cart_items = []  # If the user is not authenticated, display an empty cart
+        total_price = 0
+    user_cart = ShoppingCart.objects.filter(user=request.user).first()
+    if user_cart:
+        cart_item_count = user_cart.items.count()
+    else:
+            # If the user doesn't have a cart, set item count to 0
+        cart_item_count = 0
+    context = {
+        'cart_items': cart_items,
+        'total_price': total_price,
+        'cart_item_count':cart_item_count,
+
+    }    
+    return render(request, 'user/cart.html', context)
+
+def purchase_history_view(request):
+    # Get the user's purchase history
+    purchase_history = PurchaseHistory.objects.filter(user=request.user).order_by('-purchase_date')
+    user_cart = ShoppingCart.objects.filter(user=request.user).first()
+    if user_cart:
+        cart_item_count = user_cart.items.count()
+    else:
+            # If the user doesn't have a cart, set item count to 0
+        cart_item_count = 0
+    context = {
+        'purchase_history': purchase_history,
+        'cart_item_count':cart_item_count,
+
+    }
+    
+    return render(request, 'user/purchase_history.html', context)
 
 # def register(request):
     # if request.method == 'POST':

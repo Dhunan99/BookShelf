@@ -1,0 +1,93 @@
+<!-- purchase_history.html -->
+{% extends "user/home.html" %}
+{% block content %}
+<style>
+    /* purchase_history_dark.css */
+    .purchase-history-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #333; /* Dark background color */
+        color: #fff; /* Light text color */
+        list-style: none; /* Remove bullets */
+    }
+    
+    .purchase-history-item {
+        border: 1px solid #555; /* Darker border color */
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #444; /* Darker background color */
+    }
+    .purchase-history-item li{
+        list-style: none;   
+    }
+    
+
+    .purchase-history-item:hover {
+        background-color: #333; /* Slightly lighter background color on hover */
+        cursor: pointer;
+    }
+    
+    .purchase-history-details {
+        text-align: right;
+    }
+    
+    .book-link {
+        text-decoration: none;
+        color: white; /* Primary button color */
+        font-weight: bold;
+        transition: color 0.3s, text-decoration 0.3s; /* Smooth transition for color and text-decoration change */
+        border-bottom: 1px dotted transparent; /* Add a transparent dotted underline */
+    }
+    
+    .book-link:hover {
+        color: orange; /* New text color on hover */
+        text-decoration: underline; /* Add underline on hover */
+    }
+    
+    .book-cover {
+        max-width: 80px; /* Adjust the max-width as needed */
+        margin-right: 10px; /* Space between image and title */
+    }
+    
+    .library-heading {
+        padding-top: 15px;
+        font-size: 24px; /* Adjust the font size as needed */
+        font-weight: bold;
+        color: grey; /* Text color */
+        text-transform: uppercase; /* Uppercase text */
+        border-bottom: 2px solid #333; /* Add a bottom border */
+        padding-bottom: 10px; /* Space between text and border */
+        margin-left: 20px; /* Adjust the left margin as needed */
+    }
+</style>
+<div class="container" style="min-height: 450px; padding-bottom: 20px;">
+    <h3 class="text-left mb-4 library-heading">Your Purchases</h3>
+    
+    <ul class="purchase-history-container">
+        {% for history in purchase_history %}
+            <li class="purchase-history-item">
+                <div class="purchase-history-details">
+                    <strong>Date:</strong> <span class="pull-right">{{ history.purchase_date }}</span><br>
+                </div>
+                <ul class="purchase-history-item-list">
+                    {% for item in history.items.all %}
+                    <li>
+                        <img src="{{ item.cover_image.url }}" alt="{{ item.Title }}" class="book-cover">
+                        <a href="{% url 'book_detail' book_id=item.BookID %}" class="book-link">{{ item.Title }}</a>
+                    </li>
+                    {% if not forloop.last %}
+                        <hr>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+                <div class="purchase-history-details">
+                    <strong>Total Price:</strong> <span class="pull-right">₹{{ history.total_price }}</span>
+                </div>
+            </li>
+        {% empty %}
+            <p>Your purchase history is empty.</p>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

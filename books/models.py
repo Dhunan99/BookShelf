@@ -1,7 +1,11 @@
 # Create your models here.
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+import os
+from user.models import NotificationType,Notification
+from django.contrib.contenttypes.models import ContentType
 class SocialMediaLink(models.Model):
     PLATFORM_CHOICES = (
         ('twitter', 'Twitter'),
@@ -64,6 +68,12 @@ class Identifier(models.Model):
 
     identifier_type = models.CharField(max_length=4, choices=IDENTIFIER_CHOICES)
 
+def validate_pdf_file(value):
+    ext = os.path.splitext(value.name)[1]
+    valid_extensions = ['.pdf']
+    if not ext.lower() in valid_extensions:
+        raise ValidationError('Only PDF files are allowed.')
+    
 class Books(models.Model):
     BookID = models.AutoField(primary_key=True)
     Title = models.CharField(max_length=200)
@@ -73,7 +83,7 @@ class Books(models.Model):
     Description = models.TextField()
     LanguageID = models.ForeignKey(Languages, on_delete=models.CASCADE)
     Price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    cover_image = models.ImageField(upload_to = 'book/book_cover', blank=True, null=True)
+    cover_image = models.ImageField(upload_to='book/book_cover')
     tags = models.ManyToManyField(Tag, blank=True, null=True)
     IDENTIFIER_CHOICES = (
         ('ASIN', 'ASIN'),
@@ -81,6 +91,7 @@ class Books(models.Model):
     )
     identifier_type = models.CharField(max_length=4, choices=IDENTIFIER_CHOICES, blank=True, null=True)
     identifier_value = models.CharField(max_length=20, blank=True, null=True) 
+    epub_file = models.FileField(upload_to='book/epubs/', blank=True, null=True)
     rating = models.FloatField(null=True, blank=True)
     rating_count = models.PositiveIntegerField(default=0)
     class Meta:
@@ -124,9 +135,9 @@ class Review(models.Model):
         self.save()
 
     def delete(self, *args, **kwargs):
-        # Delete associated reviews
-        self.review_set.all().delete()
-        super().delete(*args, **kwargs)
+        # Delete the review instance
+        super(Review, self).delete(*args, **kwargs)
+        self.book.calculate_average_rating()
 
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -134,6 +145,21 @@ class Like(models.Model):
 
     class Meta:
         unique_together = ('user', 'review')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        # Check if the review's author is different from the user who liked it
+        if self.user != self.review.user:
+            # Create a notification for the review author
+            Notification.objects.create(
+                sender=self.user,   
+                recipient=self.review.user,
+                notification_type=NotificationType.LIKE,  # Set the notification type to LIKE
+                content_type=ContentType.objects.get_for_model(self),  # Set the content_type
+                object_id=self.id,  # Set the object_id to the Like instance's id
+                extra_content=self.review.book.Title
+            )
 
 class UserLibrary(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -143,3 +169,15 @@ class UserLibrary(models.Model):
         return f"Library of {self.user.username}"
     class Meta:
         verbose_name_plural = "User Libraries"
+
+class Report(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    review = models.ForeignKey(Review, on_delete=models.CASCADE)
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    dismissed = models.BooleanField(default=False)
+    def __str__(self):
+        return f"Report by '{self.user.username}' on '{self.review}'"
+
+    class Meta:
+        unique_together = ('user', 'review')

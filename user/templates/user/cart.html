@@ -1,0 +1,120 @@
+{% extends "books/book_list.html" %}
+<title>Cart</title>
+{% block content %}
+<style>
+.library-heading {
+    padding-top:15px;
+    font-size: 24px; /* Adjust the font size as needed */
+    font-weight: bold;
+    color: grey; /* Text color */
+    text-transform: uppercase; /* Uppercase text */
+    border-bottom: 2px solid #333; /* Add a bottom border */
+    padding-bottom: 10px; /* Space between text and border */
+    margin-left: 20px; /* Adjust the left margin as needed */
+  }
+  .cart-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 60vh; /* Make the container at least the height of the viewport */
+  }
+  .cart-content {
+    flex-grow: 1; /* Allow content to grow and fill remaining space */
+  }
+  .cart-total {
+    color: #fff; /* Light text color */
+    font-size: 18px; /* Increase font size */
+    padding: 10px; /* Add padding for spacing */
+    border-top: 1px solid #555; /* Darker border color */
+    border-bottom: 1px solid #555; /* Darker border color */
+    text-align: right; /* Align text to the right */
+    margin-top: auto; /* Push to the bottom */
+}
+
+/* Style the Checkout button */
+.checkout-button {
+    background-color: #007bff; /* Primary button color */
+    color: #fff; /* Light text color */
+    font-size: 16px; /* Increase font size */
+    padding: 10px 20px; /* Add padding for spacing */
+    text-decoration: none; /* Remove underlines */
+    border-radius: 5px; /* Add border radius for rounded corners */
+    margin-top: 20px; /* Add margin for spacing */
+    align-self: flex-end; /* Align to the right */
+}
+.container{
+    padding-bottom:25px;
+}
+.right-align a {
+    text-decoration: none;
+    text-align: right;
+    color: white; /* Default text color */
+    transition: color 0.3s; /* Smooth transition for color change */
+}
+
+/* Change text color on hover */
+.right-align a:hover {
+    color: black; /* New text color on hover */
+}
+.right-align{
+    text-align: right;
+}
+.empty-cart-message {
+    font-size: 18px; /* Set the font size */
+    text-align: center; /* Center-align the text */
+    margin-top: 20px; /* Add some top margin for spacing */
+}
+
+</style>
+<script>
+    window.onload = function() {
+        // Set the title when the page loads
+        document.title = "Cart";
+    };
+</script>
+<div class="container cart-container">
+    <h3 class="text-left mb-4 library-heading">Your Cart</h3>
+    <div class="right-align">
+      <a href="{% url 'purchase_history' %}" class="btn btn-primary btn-sm">Purchase History</a>
+    </div>
+    <!-- Cart items -->
+    {% if cart_items %}
+    <div class="row cart-content">
+    
+        {% for book in cart_items %}
+          <div class="col-md-6 mb-4">
+            <div class="card">
+              <div class="card-body">
+                <img src="{{ book.cover_image.url }}" alt="{{ book.Title }} Cover" class="book-cover">
+                <div>
+                  <h5 class="card-title">{{ book.Title }}</h5>
+                  <p><strong>Author:</strong> {{ book.Author.AuthorName }}</p>
+                  <p><strong>Language:</strong> {{ book.LanguageID.LanguageName }}</p>
+                  <p><strong>Categories:</strong> 
+                    {% for category in book.Categories.all %}
+                      {{ category.name }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                  </p>
+                  <p><strong>Price:</strong> ₹{{ book.Price }}</p>
+                  <a href="{% url 'book_detail' book_id=book.BookID %}" class="btn btn-success btn-sm">View Details</a>       
+                <a href="{% url 'remove_from_cart' book_id=book.BookID %}" class="btn btn-danger btn-sm">Remove from Cart</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+    <p class="empty-cart-message">Your cart is empty.</p>
+    {% endif %}
+    <!-- Total price -->
+    <div class="cart-total">
+        Total: ₹{{ total_price }}
+    </div>
+    <hr>
+    <!-- Checkout button -->
+    <div class="right-align">
+        <a href="{% url "checkout" %}" class="checkout-button btn-sm">Proceed to Checkout</a>
+    </div>
+</div>
+
+{% endblock content %}

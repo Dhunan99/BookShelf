@@ -1,0 +1,8 @@
+<div id="notification-messages">
+    {% for message in notification_messages %}
+        <p>{{ message }}</p>
+        {% if not forloop.last %}
+            <hr>
+        {% endif %}
+    {% endfor %}
+</div>

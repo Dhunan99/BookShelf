@@ -1,0 +1,120 @@
+{% extends "user/home.html" %}
+{% block content %}
+    <style>
+       
+      * {
+        box-sizing: border-box;
+        padding: 0px;
+        margin: 0px;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      .card {
+        font-family: cursive;
+        background-color: #292929; /* Dark background color */
+        padding: 40px; /* Increase padding to make the card larger */
+        border: 1px solid #444; /* Darker border color */
+        border-radius: 10px; /* Increase border radius for rounded corners */
+        box-shadow: 1px 1px 10px 0px rgba(0, 0, 0, 0.25); /* Slightly stronger box shadow */
+        color: white; /* Text color */
+        width: 400px; /* Set a fixed width for the card */
+        margin: 0 auto; /* Center the card horizontally */
+    }
+
+    .title {
+        text-align: center;
+        letter-spacing: 1px;
+        font-size: 34px; /* Increase title font size for better visibility */
+    }
+
+    .muted {
+        color: #8e7f7f;
+        display: block;
+        margin-bottom: 10px;
+        text-align: center;
+        font-size:16px;
+    }
+
+    .btn_container {
+        padding: 20px;
+        text-align: center;
+    }
+
+    .btn {
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 10px 20px; /* Increase button padding for better clickability */
+        background-color: purple;
+        color: white;
+        font-size: 1.2em;
+        font-weight: 600;
+        letter-spacing: 1px;
+        transition: background-color 0.3s ease-in-out;
+    }
+
+    .btn:hover {
+        background-color: #ff8c87; /* Darker background color on hover */
+    }
+      .container{
+        display: flex;
+        justify-content: center;
+        align-items: center; /* Vertically center the content */
+      }
+      strong{
+        color:#ffb6c1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" style="min-height:440px;">
+    <div class="card">
+      <h1 class="title">Proceed to Pay</h1>
+      <small class="muted"
+        >Do you wish pay <strong>₹{{ amount }}</strong> for your purchase of {% if title %}{{ title }}{% endif %}{% if books %}:<ul>
+            {% for book in books %}
+              <li>{{ book.Title }}</li>
+            {% endfor %}
+          </ul>{% endif %} ? </small
+      >
+      <div class="btn_container">
+        <!-- Payment Button -->
+        <button class="btn" id="pay-btn">Pay</button>
+      </div>
+    </div>
+  </body>
+   
+  <!-- Razorpay's Javascript code. -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    var options = {
+       
+      // Enter the Key ID generated from the Dashboard
+      key: "{{ razorpay_merchant_key }}",
+       
+      // Amount is in currency subunits.
+      // Default currency is INR. Hence,
+      // 50000 refers to 50000 paise
+      amount: "{{ razorpay_amount }}",
+      currency: "{{ currency }}",
+       
+      // Your/store name.
+      name: "BookShelf",
+       
+      // Pass the `id` obtained in the response of Step 1
+      order_id: "{{ razorpay_order_id }}",
+      callback_url: "{{ callback_url }}",
+    };
+     
+    // initialise razorpay with the options.
+    var rzp1 = new Razorpay(options);
+     
+    // add event listener to the payment button.
+    document.getElementById("pay-btn").onclick = function (e) {
+      rzp1.open();
+      e.preventDefault();
+    };
+  </script>
+</div>
+  {% endblock content %}
