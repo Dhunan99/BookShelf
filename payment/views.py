@@ -10,6 +10,12 @@ from django.contrib.auth.decorators import login_required
 from books.views import add_to_library,UserLibrary
 from user.models import ShoppingCart,PurchaseHistory
 from datetime import datetime
+from django.template.loader import render_to_string
+from django.utils import timezone
+import os
+from django.core.mail import EmailMessage
+from xhtml2pdf import pisa
+from django.db.models import F
 # authorize razorpay client with API Keys.
 razorpay_client = razorpay.Client(
     auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET))
@@ -122,6 +128,7 @@ def paymenthandler(request):
                 for book_id in book_ids:
                     add_to_library(request.user, book_id)
                 user_cart.update_total_price()
+                purchase_history = PurchaseHistory.objects.filter(user=request.user).order_by(F('purchase_date').desc(nulls_last=True)).first()
             user_cart.save()
             # Capture the payment with the amount from the order
             amount = int(order.amount * 100)  # Convert Decimal to paise
@@ -131,9 +138,52 @@ def paymenthandler(request):
             order.payment_id = payment_id
             order.payment_status = Order.PaymentStatusChoices.SUCCESSFUL
             order.save()
+            l=[purchase_history]
+            context = {
+            'purchase_history': l,
+            'start_date': datetime.now(),
+            'total_price': order.amount,
+        }
+        print(purchase_history,123123)
+        receipt_html = render_to_string('user/receipt.html', context)
 
+        # Create a PDF file
+        pdf_file_path = os.path.join(settings.MEDIA_ROOT, 'receipt.pdf')
+        with open(pdf_file_path, 'w+b') as pdf_file:
+            pisa.pisaDocument(receipt_html.encode("UTF-8"), pdf_file)
+
+        # Send an email with the PDF receipt as an attachment
+        subject = '📚 Your BookShelf Purchase Receipt'
+
+# Customize the message
+        message = f"""
+Hello there bookworm! 📖
+
+We hope you're as excited as we are about your recent book purchase. 🤩
+
+Your purchase details are here to make your day even better:
+
+📅 Date & Time: { purchase_history.purchase_date.strftime("%Y-%m-%d %H:%M:%S") }
+💼 Order Number: { order.razorpay_order_id }
+📚 Book(s) Purchased: { ', '.join([item.Title for item in purchase_history.items.all()]) }
+💰 Total Amount: Rs. { order.amount }
+
+Thank you for choosing our bookstore. Happy reading! 📖✨
+
+Warm regards,
+BookShelf Team
+        """
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [request.user.email]
+
+        email = EmailMessage(subject, message, from_email, recipient_list)
+        email.attach_file(pdf_file_path, 'application/pdf')
+        email.send()
+
+        # Clean up: Remove the temporary PDF file
+        os.remove(pdf_file_path)
             # Redirect to a success page or return a success response
-            return redirect('/books/user_library/')
+        return redirect('/books/user_library/')
 
                 
 @login_required

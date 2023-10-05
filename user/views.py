@@ -6,7 +6,7 @@ from django.contrib.auth import login as lg, authenticate
 from django.contrib.auth.models import User
 from .forms import NewUserForm,UserBioChangeForm,CustomUserChangeForm,UserBioChangeForm2,EmailChange,NumberChange,UserProfileChangeForm
 from django.contrib import messages
-from django.contrib.auth.views import PasswordResetView
+from django.contrib.auth.views import PasswordResetView,PasswordResetDoneView,PasswordResetCompleteView,PasswordResetConfirmView
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -19,7 +19,13 @@ from django.contrib.auth.views import PasswordChangeView
 from books.models import Books
 from django.views.decorators.csrf import csrf_exempt
 from django.template.loader import render_to_string
-
+from django.http import HttpResponse
+from django.template.loader import get_template
+from django.template import Context
+import datetime
+from xhtml2pdf import pisa
+from io import BytesIO
+from decimal import Decimal
   # Import User model
 # from django.contrib import messages
 # from django.contrib.auth import authenticate, login
@@ -35,7 +41,9 @@ class CustomPasswordResetView(PasswordResetView):
     template_name = 'user/password_reset_form.html'  # Your template for the password reset form
     email_template_name = 'user/password_reset_email.html'  # Your email template for the password reset email
     success_url = reverse_lazy('password_reset_done')  # URL to redirect after successful form submission
-
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'user/password_reset_done.html'  # Your template for password reset done page
+    
 def login(request):
     error_message=""
     if request.user.is_authenticated:
@@ -285,6 +293,49 @@ def purchase_history_view(request):
     }
     
     return render(request, 'user/purchase_history.html', context)
+
+def generate_receipt(request):
+    if request.method == "POST":
+        start_date_str = request.POST.get("start_date")
+        end_date_str = request.POST.get("end_date")
+
+        # Parse the start and end dates from the form
+        start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d")
+        end_date = datetime.datetime.strptime(end_date_str, "%Y-%m-%d")
+
+        # Query the purchase history for records within the specified date range
+        purchase_history = PurchaseHistory.objects.filter(
+            user=request.user,
+            purchase_date__gte=start_date,
+            purchase_date__lte=end_date
+        ).order_by('-purchase_date')
+
+        # Calculate the total_price of all orders within the date range
+        total_price = Decimal(0)
+        for history in purchase_history:
+            total_price += history.total_price
+
+        # Create a context for the receipt template
+        context = {
+            'purchase_history': purchase_history,
+            'start_date': start_date,
+            'end_date': end_date,
+            'total_price': total_price,  # Pass the total_price to the template
+        }
+
+        # Render the receipt template to HTML
+        template_name = 'user/receipt.html'
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="receipt.pdf"'
+
+        buffer = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(render_to_string(template_name, context).encode("UTF-8")), buffer)
+        
+        if not pdf.err:
+            response.write(buffer.getvalue())
+            return response
+
+    return HttpResponse("Invalid request")
 
 # def register(request):
     # if request.method == 'POST':

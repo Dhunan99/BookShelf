@@ -4,12 +4,12 @@
 <style>
     /* purchase_history_dark.css */
     .purchase-history-container {
-        max-width: 800px;
         margin: 0 auto;
         padding: 20px;
         background-color: #333; /* Dark background color */
         color: #fff; /* Light text color */
         list-style: none; /* Remove bullets */
+        max-width: 800px;
     }
     
     .purchase-history-item {
@@ -60,10 +60,149 @@
         padding-bottom: 10px; /* Space between text and border */
         margin-left: 20px; /* Adjust the left margin as needed */
     }
+    /* Style for the "Generate Receipt" button */
+    #generate-receipt-button {
+        background-color: #007bff; /* Primary button color */
+        color: #fff; /* Text color */
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 10px;
+    }
+    
+    #generate-receipt-button:hover {
+        background-color: #0056b3; /* Button color on hover */
+    }
+    
+    /* Style for the date range form overlay */
+    #date-range-form-overlay {
+        color:black;
+        display: none; /* Hidden by default */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black background */
+        z-index: 1;
+        overflow: auto;
+    }
+    
+    /* Style for the date range form */
+    #date-range-form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Style for form labels and inputs */
+    #date-range-form label,
+    #date-range-form input {
+        display: block;
+        margin-bottom: 10px;
+    }
+    
+    /* Style for buttons inside the form */
+    #date-range-form button {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    #date-range-form button[type="submit"] {
+        background-color: #28a745; /* Green color for the "Generate" button */
+    }
+    
+    #date-range-form button[type="submit"]:hover,
+    #date-range-form #close-button:hover {
+        background-color: #1e7e34; /* Button color on hover */
+    }
+    
+    /* Style for the "Close" button */
+    #close-button {
+        background-color: #dc3545; /* Red color for the "Close" button */
+    }
+    .container1 {
+        align-items: center;
+    }
+    hr{
+        border-top: 1px solid rgb(243 243 243 / 10%);
+        }
+    #generate-receipt-button {
+        display: block; /* Make it a block-level element to center horizontally */
+        margin: 10px auto; /* Center horizontally */
+        margin-right: 15%; /* 15% margin to the right */
+    }
 </style>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const formOverlay = document.getElementById("date-range-form-overlay");
+        const openButton = document.getElementById("generate-receipt-button");
+        const closeButton = document.getElementById("close-button");
+        const dateRangeForm = document.getElementById("date-range-form");
+    
+        // Function to open the form
+        function openForm() {
+            formOverlay.style.display = "block";
+        }
+    
+        // Function to close the form
+        function closeForm() {
+            formOverlay.style.display = "none";
+        }
+    
+        // Open the form when the "Generate Receipt" button is clicked
+        openButton.addEventListener("click", openForm);
+    
+        // Close the form when the "Close" button is clicked
+        closeButton.addEventListener("click", closeForm);
+    
+        // Close the form when clicking outside of it
+        window.addEventListener("click", function (event) {
+            if (event.target === formOverlay) {
+                closeForm();
+            }
+        });
+    });
+    
+</script>
 <div class="container" style="min-height: 450px; padding-bottom: 20px;">
     <h3 class="text-left mb-4 library-heading">Your Purchases</h3>
+
+   
+<!-- Add a form to select the date range -->
+<div id="date-range-form-overlay">
     
+    <div id="date-range-form">
+        
+        <form method="post" action="{% url "generate_receipt" %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="start_date">From Date:</label>
+                <input type="date" name="start_date" id="start_date" required class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="end_date">To Date:</label>
+                <input type="date" name="end_date" id="end_date" required class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">Generate</button>
+            <button type="button" id="close-button" class="btn btn-secondary">Close</button>
+        </form>
+    </div>
+</div>
+
+<div class="container1">
+    
+        <button class="btn btn-primary btn-sm" id="generate-receipt-button">Generate Receipt</button>
     <ul class="purchase-history-container">
         {% for history in purchase_history %}
             <li class="purchase-history-item">
@@ -90,4 +229,6 @@
         {% endfor %}
     </ul>
 </div>
-{% endblock %}
+</div>
+</div>
+{% endblock %}  

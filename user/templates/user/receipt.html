@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt</title>
+    <style>
+        body {
+            font-size: 16px;
+        }
+        
+        /* Style the header for a more prominent look */
+        .header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px 0;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        /* Style the table for better readability */
+        table {
+            margin-top: 30px;
+            border: 1px solid #ddd;
+            border-collapse: collapse;
+            width: 100%;
+            
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        /* Style the list items for better separation */
+        ul.item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .item img {
+            max-width: 80px;
+            margin-right: 15px;
+        }
+        
+        /* Style the total price for emphasis */
+        .total-price {
+            text-align: right;
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        .space {
+            margin-bottom: 10px; /* Adjust margin as needed for spacing */
+            /* You can also use padding instead of margin, depending on your design */
+        }
+        .header2{
+            padding: 20px 0;
+        }
+        a{
+            text-decoration:none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 style="text-align:center;">Receipt for Purchases</h2>
+        </div >
+        <div class="header2" style="border: 1px solid #ddd;">
+        <h3 style="padding-left:10px;text-align:center; ">
+            {% if start_date and end_date %}
+                Period: {{ start_date|date:"Y-m-d" }} to {{ end_date|date:"Y-m-d" }}
+            {% elif start_date %}
+                Date: {{ start_date|date:"Y-m-d" }}
+            {% endif %}
+        </h3>
+    </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Item</th>
+                    <th>Total Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for history in purchase_history %}
+                    <tr>
+                        <td>{{ history.purchase_date|date:"Y-m-d H:i:s" }}</td>
+                        <td>
+                            <ul class="item-list">
+                                {% for item in history.items.all %}
+                                    <li class="item">
+                                        <img src="{{ item.cover_image.url }}" alt="{{ item.Title }}" class="book-cover">
+                                        <a href="{% url 'book_detail' book_id=item.BookID %}" class="book-link">{{ item.Title }}</a>
+                                    </li>
+                                    <li class="space"></li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>Rs. {{ history.total_price }}</td>
+                    </tr>
+                {% empty %} 
+                    <tr>
+                        <td colspan="3">No purchases found in the specified date range.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="total-price">
+            Grand Total: Rs. {{ total_price }}
+        </div>
+    </div>
+</div>
+</body>
+</html>

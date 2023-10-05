@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
-from .views import CustomPasswordResetView
-from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetDoneView,PasswordResetCompleteView
+from .views import CustomPasswordResetView,CustomPasswordResetDoneView
+from django.contrib.auth.views import PasswordResetConfirmView,PasswordResetCompleteView
 urlpatterns = [
     path('login/',views.login,name='login'),
     path('home/',views.home,name="home"),
@@ -9,7 +9,7 @@ urlpatterns = [
     path('reset/',CustomPasswordResetView.as_view(), name='password_reset'),
     path('reset/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset/done/', PasswordResetCompleteView.as_view(), name='password_reset_complete'),
-    path('password_reset/done/', PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('password_reset/done/', CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
     path('verify-otp/<int:user_id>/', views.verify_otp, name='verify_otp'),
     path('validate-username/', views.validate_username, name='validate_username'),
     path('validate-email/', views.validate_email, name='validate_email'),
@@ -22,5 +22,7 @@ urlpatterns = [
     path('purchase-history/', views.purchase_history_view, name='purchase_history'),
     path('get-notifications/',views.notifications_view,name="notifications_view"),
     path('mark-notifications-as-read/', views.mark_notifications_as_read, name='mark_notifications_as_read'),
+    path('generate-receipt/', views.generate_receipt, name='generate_receipt'),
+
 
 ]
