@@ -254,6 +254,33 @@ label[for="items_per_page"] {
   font-size: 20px; /* Adjust the font size as needed */
   color: white; /* Change the color of the checkmark */
 }
+/* Styles for the darkened background overlay */
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Darken the background */
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+/* Styles for the filter options menu */
+.filter-menu {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the menu both horizontally and vertically */
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1001; /* Ensure it's above the overlay */
+}
+
+
 </style>
 
 {% endblock style %}
@@ -345,6 +372,39 @@ label[for="items_per_page"] {
   });
   
 </script>
+<script>
+  $(document).ready(function() {
+    // Toggle the filter menu when the filter icon is clicked
+    $("#filter-icon").click(function(e) {
+      e.stopPropagation(); // Prevent the click event from closing the menu
+      $("#overlay").toggle();
+      $("#filter-menu").toggle();
+    });
+
+    // Close the filter menu when clicking outside of it or pressing Escape key
+    $(document).on("click keyup", function(e) {
+      if (
+        !$(e.target).closest("#filter-menu").length ||
+        (e.type === "keyup" && e.key === "Escape")
+      ) {
+        $("#overlay").hide();
+        $("#filter-menu").hide();
+      }
+    });
+
+    // Handle the "Apply Filter" button click event (you can customize this)
+    $("#apply-filter").click(function() {
+      // Process the selected filter options and perform advanced search
+      // You can add your filtering logic here
+      // Then, update the search results accordingly
+
+      // Close the filter menu after applying filters
+      $("#overlay").hide();
+      $("#filter-menu").hide();
+    });
+  });
+</script>
+<div id="overlay" class="overlay"></div>
 <div class="container">
   <div class="row">
     <div class="col-md-12">
@@ -384,14 +444,22 @@ label[for="items_per_page"] {
   <div class="search-wrapper">
     <input type="text" class="search-bar" id="search-bar" placeholder="Search by title" autocomplete="off">
     <i class="fas fa-search search-icon" id="search-icon"></i>
+    <i class="fa-solid fa-filter search-icon" id="filter-icon"></i>
   </div>
   <div class="search-results" id="search-results"></div>
 </div>
+<div class="filter-menu" id="filter-menu">
+  <!-- Add your advanced search options here -->
+  <label>Category:</label>
+  <select id="category-filter">
+    <option value="option1">Option 1</option>
+    <option value="option2">Option 2</option>
+    <!-- Add more options as needed -->
+  </select>
+  <!-- Add more filter options here -->
 
-
-
-
-
+  <button id="apply-filter">Apply Filter</button>
+</div>
 
 <div class="collapse" id="allCategories">
   <ul class="row">
@@ -414,15 +482,15 @@ label[for="items_per_page"] {
   <h3 class="text-left mb-4 library-heading">Books Catalogue</h3>
   <form method="get" id="items_per_page_form">
     <label for="items_per_page">Books per page:</label>
-    <select name="items_per_page" id="items_per_page_select">
+    <select name="items_per_page" id="items_per_page_select" onchange="this.form.submit()">
         <option value="2" {% if items_per_page == "2" %}selected{% endif %}>2</option>
         <option value="4" {% if items_per_page == "4" %}selected{% endif %}>4</option>
         <option value="6" {% if items_per_page == "6" or items_per_page == 6 %}selected{% endif %}>6</option>
         <option value="8" {% if items_per_page == "8" %}selected{% endif %}>8</option>
         <option value="10" {% if items_per_page == "10" %}selected{% endif %}>10</option>
     </select>
-    <input type="submit" value="Apply" id="submit_button">
 </form>
+
   <div class="row" style="min-height:293px;">
     
     {% for book in books %}

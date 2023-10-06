@@ -395,8 +395,10 @@ div.ratings-column p{
   text-align: right; /* Right-align the like count */
 }
 .dp{
-  max-width:100px;
-  border-radius:30px;
+  border-radius:100%;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
 }
 .breadcrumb{
   float:left;
@@ -1021,7 +1023,11 @@ button#submitReport:hover {
     <div class="col-md-12">
 <div class="breadcrumb">
   <a href="/">Home</a> /
-  <a href="/books/book_list">Browse</a> /
+  {% if book_in_library %}
+  <a href="/books/user_library/">Library</a>
+  {% else %}
+  <a href="/books/book_list">Browse</a>
+  {% endif %} /
   <a href="/books/book/{{book.BookID}}">{{ book.Title }}</a>
   
 </div>
@@ -1123,6 +1129,7 @@ button#submitReport:hover {
     </div>
     
   </div>
+  {% if book_in_library %}
   <div class="row">
     <div class="col-md-12 mt-4">
       <h2 class="section-title text-center design-rat">User's Ratings</h2>
@@ -1265,6 +1272,15 @@ button#submitReport:hover {
       </div>
     </div>
   </div>
+  {% else %}
+  <div class="row">
+    <div class="col-md-12 mt-4">
+      <h2 class="section-title text-center design-rat">User's Ratings</h2>
+      <h5 class="text-center">Please buy the book to Rate/Review it</h5>
+    </div>
+  </div>
+  <hr>
+  {% endif %}
       </div>
     </div>
   </div>

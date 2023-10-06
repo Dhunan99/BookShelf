@@ -1,5 +1,5 @@
 from django import forms
-from .models import Category,Review
+from .models import Category,Review,Authors, Category, Languages
 class BookForm(forms.Form):
     title = forms.CharField(max_length=200)
     author_name = forms.CharField(max_length=100)
@@ -37,3 +37,45 @@ class ReviewForm(forms.ModelForm):
         if word_count < 50:
             raise forms.ValidationError("Review must contain at least 50 words.")
         return review
+    
+class BookFilterForm(forms.Form):
+    keyword = forms.CharField(label='Keyword', required=False)
+    author_name = forms.ModelChoiceField(
+        queryset=Authors.objects.all(),
+        label='Author',
+        required=False
+    )
+    categories = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+    sorting_options = forms.ChoiceField(
+        choices=(
+            ('alphabetic', 'Alphabetic'),
+            ('price', 'Price'),
+        ),
+        label='Sorting Options',
+        required=False
+    )
+    publication_year_min = forms.IntegerField(
+        label='Publication Year (Min)',
+        required=False
+    )
+    publication_year_max = forms.IntegerField(
+        label='Publication Year (Max)',
+        required=False
+    )
+    language = forms.ModelChoiceField(
+        queryset=Languages.objects.all(),
+        label='Language',
+        required=False
+    )
+    min_review_count = forms.IntegerField(
+        label='Minimum Review Count',
+        required=False
+    )
+    min_rating_value = forms.FloatField(
+        label='Minimum Rating Value',
+        required=False
+    )

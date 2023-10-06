@@ -16,11 +16,13 @@ import os
 from django.core.mail import EmailMessage
 from xhtml2pdf import pisa
 from django.db.models import F
+from django.views.decorators.cache import cache_control
+
 # authorize razorpay client with API Keys.
 razorpay_client = razorpay.Client(
     auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET))
  
- 
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @login_required
 def homepage(request, book_id):
     currency = 'INR'
@@ -118,7 +120,8 @@ def paymenthandler(request):
                 purchase_history = PurchaseHistory.objects.create(
                     user=user_cart.user,
                     total_price=total_price,
-                    purchase_date=datetime.now()
+                    purchase_date=datetime.now(),
+                    order=order
                 )
                 purchase_history.items.set(user_cart.items.all())
                 user_cart.items.clear()
@@ -126,7 +129,7 @@ def paymenthandler(request):
             else:
                 # Not all books are in the cart, add them to the library
                 for book_id in book_ids:
-                    add_to_library(request.user, book_id)
+                    add_to_library(request.user, book_id,order1=order)
                 user_cart.update_total_price()
                 purchase_history = PurchaseHistory.objects.filter(user=request.user).order_by(F('purchase_date').desc(nulls_last=True)).first()
             user_cart.save()
@@ -144,7 +147,6 @@ def paymenthandler(request):
             'start_date': datetime.now(),
             'total_price': order.amount,
         }
-        print(purchase_history,123123)
         receipt_html = render_to_string('user/receipt.html', context)
 
         # Create a PDF file
@@ -154,24 +156,24 @@ def paymenthandler(request):
 
         # Send an email with the PDF receipt as an attachment
         subject = '📚 Your BookShelf Purchase Receipt'
-
+        print(order,purchase_history)
 # Customize the message
         message = f"""
-Hello there bookworm! 📖
+    Hello there bookworm! 📖
 
-We hope you're as excited as we are about your recent book purchase. 🤩
+    We hope you're as excited as we are about your recent book purchase. 🤩
 
-Your purchase details are here to make your day even better:
+    Your purchase details are here to make your day even better:
 
-📅 Date & Time: { purchase_history.purchase_date.strftime("%Y-%m-%d %H:%M:%S") }
-💼 Order Number: { order.razorpay_order_id }
-📚 Book(s) Purchased: { ', '.join([item.Title for item in purchase_history.items.all()]) }
-💰 Total Amount: Rs. { order.amount }
+    📅 Date & Time: { purchase_history.purchase_date.strftime("%Y-%m-%d %H:%M:%S") }
+    💼 Order Number: { order.razorpay_order_id }
+    📚 Book(s) Purchased: { ', '.join([item.Title for item in purchase_history.items.all()]) }
+    💰 Total Amount: Rs. { order.amount }
 
-Thank you for choosing our bookstore. Happy reading! 📖✨
+    Thank you for choosing our bookstore. Happy reading! 📖✨
 
-Warm regards,
-BookShelf Team
+    Warm regards,
+    BookShelf Team
         """
         from_email = settings.DEFAULT_FROM_EMAIL
         recipient_list = [request.user.email]
@@ -185,7 +187,7 @@ BookShelf Team
             # Redirect to a success page or return a success response
         return redirect('/books/user_library/')
 
-                
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)   
 @login_required
 def checkout(request):
     currency = 'INR'

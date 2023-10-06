@@ -56,6 +56,8 @@ class PurchaseHistory(models.Model):
     items = models.ManyToManyField('books.Books', related_name='purchases')
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     purchase_date = models.DateTimeField()
+    order = models.OneToOneField('payment.Order', on_delete=models.SET_NULL, null=True, related_name='purchase_history')
+
 
     def __str__(self):
         return f"Purchase history for {self.user.username} - {self.purchase_date}"

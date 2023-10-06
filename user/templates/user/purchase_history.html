@@ -54,7 +54,7 @@
         padding-top: 15px;
         font-size: 24px; /* Adjust the font size as needed */
         font-weight: bold;
-        color: grey; /* Text color */
+        color: #a4a4a4; /* Text color */
         text-transform: uppercase; /* Uppercase text */
         border-bottom: 2px solid #333; /* Add a bottom border */
         padding-bottom: 10px; /* Space between text and border */
@@ -176,6 +176,13 @@
     
 </script>
 <div class="container" style="min-height: 450px; padding-bottom: 20px;">
+    <div class="breadcrumb">
+        <a href="/">Home</a> /
+        <a href="">Orders</a>
+        {% if category %}/ 
+        <a href="">{{category}}</a>
+        {% endif %}
+      </div>
     <h3 class="text-left mb-4 library-heading">Your Purchases</h3>
 
    

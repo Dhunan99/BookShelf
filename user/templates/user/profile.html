@@ -370,14 +370,22 @@ input[type="radio"]:disabled + label {
     z-index: 1; /* Ensure it's above other elements */
 }
 
-
 </style>
 {% endblock style %}
 
 
 {% block content %}
+<div class="container">
+    <div class="breadcrumb">
+        <a href="/">Home</a> /
+        <a href="">Profile</a>
+        {% if category %}/ 
+        <a href="">{{category}}</a>
+        {% endif %}
+      </div>
 <div class="custom-container">
     <div class="container mt-5 mb-4 dark-theme">
+        
         <div class="row">
             <div class="col-md-3">
                 <!-- Sidebar for section selection -->
@@ -401,7 +409,7 @@ input[type="radio"]:disabled + label {
                             <div class="form-group mb-4">
                                 {% if user.userprofile.profile_image %}
                                 <div class="d-flex justify-content-center align-items-center">
-                                    <img src="{{ user.userprofile.profile_image.url }}" alt="Profile Image" class="img-fluid rounded-circle border border-secondary" width="150px">
+                                    <img src="{{ user.userprofile.profile_image.url }}" alt="Profile Image" class="img-fluid rounded-circle border border-secondary image" width="150px" height="150px">
                                 </div>
                                     {% else %}
                                     <div class="d-flex justify-content-center align-items-center">
@@ -516,5 +524,5 @@ input[type="radio"]:disabled + label {
         </div>
     </div>
 </div>  
-
+</div>
 {% endblock content %}

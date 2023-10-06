@@ -26,6 +26,7 @@ import datetime
 from xhtml2pdf import pisa
 from io import BytesIO
 from decimal import Decimal
+from django.views.decorators.cache import cache_control
   # Import User model
 # from django.contrib import messages
 # from django.contrib.auth import authenticate, login
@@ -69,6 +70,7 @@ def mark_notifications_as_read(request):
     else:
         return JsonResponse({'message': 'Invalid request method'}, status=400)
 
+@login_required
 def notifications_view(request):
     user = request.user
     unread_notifications = Notification.objects.filter(recipient=user, is_read=False).order_by('-timestamp')
@@ -111,7 +113,6 @@ def register(request):
                     # lg(request, user)
                     # context= {'form': form}
                     # messages.success(request, "Registration successful." )
-                    return redirect('/user/home')
                 else:
                      context={'form':form}
         return render (request,"user/register.html",context)
@@ -182,7 +183,7 @@ def validate_username(request):
     # form = AuthenticationForm()
     # return render(request, 'user/login.html', {'form':form, 'title':'log in'})
 
-
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @login_required
 def home(request):
      # Fetch book data from the Books model
@@ -201,6 +202,7 @@ def home(request):
     
     return render(request,'user/home.html',context)
 
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @login_required
 def user_profile(request):
     user_cart = ShoppingCart.objects.filter(user=request.user).first()
@@ -210,6 +212,7 @@ def user_profile(request):
             # If the user doesn't have a cart, set item count to 0
         cart_item_count = 0
     return render(request,'user/profile.html',{'cart_item_count':cart_item_count})
+
 
 @login_required
 def save_profile(request):
@@ -252,6 +255,8 @@ def validate_email(request):
     is_taken = User.objects.filter(email=email).exists()
     return JsonResponse({'is_taken': is_taken})
 
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def cart_view(request):
     # Check if the user is authenticated
     if request.user.is_authenticated:
@@ -277,6 +282,8 @@ def cart_view(request):
     }    
     return render(request, 'user/cart.html', context)
 
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def purchase_history_view(request):
     # Get the user's purchase history
     purchase_history = PurchaseHistory.objects.filter(user=request.user).order_by('-purchase_date')
@@ -294,6 +301,8 @@ def purchase_history_view(request):
     
     return render(request, 'user/purchase_history.html', context)
 
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def generate_receipt(request):
     if request.method == "POST":
         start_date_str = request.POST.get("start_date")
@@ -326,7 +335,7 @@ def generate_receipt(request):
         # Render the receipt template to HTML
         template_name = 'user/receipt.html'
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="receipt.pdf"'
+        response['Content-Disposition'] = f'inline; filename="receipt_for_purchases_from_{start_date}_to_{end_date}.pdf"'
 
         buffer = BytesIO()
         pdf = pisa.pisaDocument(BytesIO(render_to_string(template_name, context).encode("UTF-8")), buffer)
@@ -334,6 +343,21 @@ def generate_receipt(request):
         if not pdf.err:
             response.write(buffer.getvalue())
             return response
+        response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="receipt_for_purchases_from_{start_date}_to_{end_date}.pdf"'
+
+    # Render the HTML template to PDF
+    with open('user/receipt.html', 'r') as template_file:
+        template_content = template_file.read()
+        rendered_html = render(request, 'invoice.html', context)
+
+        # Create a PDF using pisa
+        pisa_status = pisa.CreatePDF(
+            rendered_html.content,
+            dest=response,
+            link_callback=None  # Optional: Handle external links
+        )
+    return response
 
     return HttpResponse("Invalid request")
 

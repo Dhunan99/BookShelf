@@ -31,8 +31,13 @@
         margin: 20px 0; /* Add margin to separate it from the content */
     }
 </style>
-
+<div class="container">
+    <div class="breadcrumb">
+        <a href="/">Home</a> /
+        <a href="/books/authors">Authors</a>
+      </div>
 <div class="container1">
+    
     <div class="stats-container1">
         <h1>Statistics</h1><hr >
         <p>Total Users: {{ user_count }}</p>
@@ -45,5 +50,6 @@
         <p>Total Likes: {{ like_count }}</p>
         <p>Total Social Media Links: {{ social_links }}</p>
     </div>
+</div>
 </div>
 {% endblock content %}

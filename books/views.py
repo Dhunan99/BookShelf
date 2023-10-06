@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect,get_object_or_404
-from .forms import BookForm,CategoryForm,ReviewForm
+from .forms import BookForm,CategoryForm,ReviewForm,BookFilterForm
 from .models import Authors, Languages, Books,Category,Review,Like,Report
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.http import require_POST
@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.core.paginator import Paginator,EmptyPage,PageNotAnInteger
 from django.contrib.auth.decorators import login_required
 from user.models import UserProfile,ShoppingCart,PurchaseHistory
+from payment.models import Order
 import ebooklib
 from django.urls import reverse
 from ebooklib import epub
@@ -121,11 +122,74 @@ def add_book(request):
     categories = Category.objects.all()
     return render(request, 'books/add_book.html', {'form': form, 'categories': categories})
 
+def advanced_search(books, request):
+    keyword = request.GET.get('keyword')
+    author_name = request.GET.get('author_name')
+    categories = request.GET.getlist('categories')
+    sort_by = request.GET.get('sort_by')
+    min_publication_year = request.GET.get('min_publication_year')
+    max_publication_year = request.GET.get('max_publication_year')
+    language = request.GET.get('language')
+    min_review_count = request.GET.get('min_review_count')
+    min_rating_value = request.GET.get('min_rating_value')
+
+    # Create a Q object to build the filter conditions
+    filter_conditions = Q()
+
+    if keyword:
+        filter_conditions &= Q(Title__icontains=keyword)
+
+    if author_name:
+        filter_conditions &= Q(Author__AuthorName__icontains=author_name)
+
+    if categories:
+        filter_conditions &= Q(Categories__name__in=categories)
+
+    if min_publication_year:
+        filter_conditions &= Q(PublicationYear__gte=min_publication_year)
+
+    if max_publication_year:
+        filter_conditions &= Q(PublicationYear__lte=max_publication_year)
+
+    if language:
+        filter_conditions &= Q(LanguageID__LanguageName=language)
+
+    if min_review_count:
+        filter_conditions &= Q(rating_count__gte=min_review_count)
+
+    if min_rating_value:
+        filter_conditions &= Q(rating__gte=min_rating_value)
+
+    if sort_by == 'alphabetic':
+        books = books.order_by('Title')
+    elif sort_by == 'price':
+        books = books.order_by('Price')
+
+    filtered_books = books.filter(filter_conditions).distinct()
+    return filtered_books
+
+
 @login_required
 def book_list(request):
     books = Books.objects.all()
     categories = Category.objects.all()
     items_per_page = request.GET.get('items_per_page', 6)
+    if (
+        'keyword' in request.GET or
+        'author_name' in request.GET or
+        'categories' in request.GET or
+        'sort_by' in request.GET or
+        'min_publication_year' in request.GET or
+        'max_publication_year' in request.GET or
+        'language' in request.GET or
+        'min_review_count' in request.GET or
+        'min_rating_value' in request.GET
+    ):
+        # Call the filter_books function to filter the books
+        filtered_books = advanced_search(books, request)
+    else:
+        # No relevant GET parameters, use all books
+        filtered_books = books
     books_v2 = []
     for book in books:
         in_library = book_in_user_library(book, request.user)
@@ -355,44 +419,50 @@ def remove_from_cart(request, book_id):
 
     # Redirect back to the cart page
     return redirect('cart_view')
+
 @login_required
 def add_review(request, book_id):
+    ok=UserLibrary.objects.filter(user=request.user).first()
     book = Books.objects.get(pk=book_id)
-    user = request.user
+    if book in ok.books.all():
+        user = request.user
 
-    # Check if a review by the current user for the specified book already exists
-    existing_review = Review.objects.filter(book=book, user=user).first()
+        # Check if a review by the current user for the specified book already exists
+        existing_review = Review.objects.filter(book=book, user=user).first()
 
-    if request.method == 'POST':
-        form = ReviewForm(request.POST)
-        if form.is_valid():
-            # Create a new review object or update an existing one
-            if existing_review:
-                review = form.save(commit=False)
-                existing_review.title = review.title
-                existing_review.review = review.review
-                existing_review.style_rating, existing_review.story_rating, existing_review.grammar_rating, existing_review.character_rating,existing_review.overall_rating = map(float, request.POST.get('Rating').split())
-                existing_review.save()
-                context = {'message': 'Review updated successfully'}
+        if request.method == 'POST':
+            form = ReviewForm(request.POST)
+            if form.is_valid():
+                # Create a new review object or update an existing one
+                if existing_review:
+                    review = form.save(commit=False)
+                    existing_review.title = review.title
+                    existing_review.review = review.review
+                    existing_review.style_rating, existing_review.story_rating, existing_review.grammar_rating, existing_review.character_rating,existing_review.overall_rating = map(float, request.POST.get('Rating').split())
+                    existing_review.save()
+                    context = {'message': 'Review updated successfully'}
+                else:
+                    review = form.save(commit=False)
+                    review.book = book
+                    review.user = user
+                    style_rating, story_rating, grammar_rating, character_rating, overall_rating = map(float, request.POST.get('Rating').split())
+                    review.style_rating = style_rating
+                    review.story_rating = story_rating
+                    review.grammar_rating = grammar_rating
+                    review.character_rating = character_rating
+                    review.overall_rating = overall_rating
+                    review.save()
+                    context = {'message': 'Review submitted successfully'}
+                book.calculate_average_rating()
+                return redirect('book_detail', book_id)
             else:
-                review = form.save(commit=False)
-                review.book = book
-                review.user = user
-                style_rating, story_rating, grammar_rating, character_rating, overall_rating = map(float, request.POST.get('Rating').split())
-                review.style_rating = style_rating
-                review.story_rating = story_rating
-                review.grammar_rating = grammar_rating
-                review.character_rating = character_rating
-                review.overall_rating = overall_rating
-                review.save()
-                context = {'message': 'Review submitted successfully'}
-            book.calculate_average_rating()
-            return redirect('book_detail', book_id)
-        else:
-            a=book_detail(request, book_id=book_id,form=form)
-            return a
-            
-    context = {'message': 'Oops... Something went wrong'}
+                a=book_detail(request, book_id=book_id,form=form)
+                return a
+                
+        context = {'message': 'Oops... Something went wrong'}
+    else:
+        return HttpResponse("Not Allowed")
+
     return redirect('book_detail', book_id)
 
 @login_required
@@ -504,7 +574,7 @@ def user_library_category(request, category):
     }
     return render(request, 'books/user_library.html', context)
 
-def add_to_library(user, book_id,alt=False):
+def add_to_library(user, book_id,alt=False,order1=None):
     book = get_object_or_404(Books, pk=book_id)
     user_library, created = UserLibrary.objects.get_or_create(user=user)
     cart=ShoppingCart.objects.get_or_create(user=user)
@@ -515,7 +585,8 @@ def add_to_library(user, book_id,alt=False):
             purchase_history = PurchaseHistory.objects.create(
                 user=user,
                 total_price=book.Price,
-                purchase_date=datetime.now()
+                purchase_date=datetime.now(),
+                order=order1
             )
             # Add the purchased book to the purchase history
             purchase_history.items.add(book)

@@ -9,57 +9,56 @@
         body {
             font-size: 16px;
         }
-        
+    
         /* Style the header for a more prominent look */
         .header {
             background-color: #007bff;
             color: #fff;
-            padding: 20px 0;
+            padding: 20px;
+            text-align: center;
         }
-        
-        .header h1 {
+    
+        .header h2 {
             margin: 0;
             font-size: 24px;
         }
-        
+    
         /* Style the table for better readability */
         table {
             margin-top: 30px;
-            border: 1px solid #ddd;
             border-collapse: collapse;
             width: 100%;
-            
         }
-        
+    
         th, td {
-            padding: 12px;
+            padding: 12px 20px; /* Increased padding for spacing */
             text-align: left;
             border-bottom: 1px solid #ddd;
             font-size: 14px;
         }
-        
+    
         th {
             background-color: #f2f2f2;
         }
-        
+    
         /* Style the list items for better separation */
         ul.item-list {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-        
+    
         .item {
             display: flex;
             align-items: center;
             margin: 10px 0;
         }
-        
+    
         .item img {
-            max-width: 80px;
-            margin-right: 15px;
+            max-width: 60px;
+            margin-right: 10px;
         }
-        
+    
         /* Style the total price for emphasis */
         .total-price {
             text-align: right;
@@ -67,25 +66,30 @@
             font-size: 18px;
             margin-top: 20px;
         }
+    
         .space {
-            margin-bottom: 10px; /* Adjust margin as needed for spacing */
-            /* You can also use padding instead of margin, depending on your design */
+            margin-bottom: 10px;
         }
-        .header2{
-            padding: 20px 0;
+    
+        .header2 {
+            border: 1px solid #ddd;
+            padding: 20px;
+            text-align: center;
         }
-        a{
-            text-decoration:none;
+    
+        a {
+            text-decoration: none;
         }
+    
+        /* Set fixed column widths */
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h2 style="text-align:center;">Receipt for Purchases</h2>
-        </div >
-        <div class="header2" style="border: 1px solid #ddd;">
-        <h3 style="padding-left:10px;text-align:center; ">
+    <div class="header">
+        <h2>Receipt for Purchases</h2>
+    </div>
+    <div class="header2">
+        <h3>
             {% if start_date and end_date %}
                 Period: {{ start_date|date:"Y-m-d" }} to {{ end_date|date:"Y-m-d" }}
             {% elif start_date %}
@@ -93,42 +97,41 @@
             {% endif %}
         </h3>
     </div>
-        <table>
-            <thead>
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Date & Time</th>
+                <th>Item</th>
+                <th>Total Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for history in purchase_history %}
                 <tr>
-                    <th>Date & Time</th>
-                    <th>Item</th>
-                    <th>Total Price</th>
+                    <td >{{ history.order.razorpay_order_id }} </td>
+                    <td>{{ history.purchase_date|date:"Y-m-d H:i:s" }}</td>
+                    <td>
+                        <ul class="item-list">
+                            {% for item in history.items.all %}
+                                <li class="item">
+                                <a href="{% url 'book_detail' book_id=item.BookID %}" class="book-link">{{ item.Title }}</a>
+                                </li>
+                                <li class="space"></li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td>Rs. {{ history.total_price }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                {% for history in purchase_history %}
-                    <tr>
-                        <td>{{ history.purchase_date|date:"Y-m-d H:i:s" }}</td>
-                        <td>
-                            <ul class="item-list">
-                                {% for item in history.items.all %}
-                                    <li class="item">
-                                        <img src="{{ item.cover_image.url }}" alt="{{ item.Title }}" class="book-cover">
-                                        <a href="{% url 'book_detail' book_id=item.BookID %}" class="book-link">{{ item.Title }}</a>
-                                    </li>
-                                    <li class="space"></li>
-                                {% endfor %}
-                            </ul>
-                        </td>
-                        <td>Rs. {{ history.total_price }}</td>
-                    </tr>
-                {% empty %} 
-                    <tr>
-                        <td colspan="3">No purchases found in the specified date range.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <div class="total-price">
-            Grand Total: Rs. {{ total_price }}
-        </div>
+            {% empty %} 
+                <tr>
+                    <td colspan="4">No purchases found in the specified date range.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="total-price">
+        Grand Total: Rs. {{ total_price }}
     </div>
-</div>
 </body>
 </html>
