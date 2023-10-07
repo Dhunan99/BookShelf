@@ -268,6 +268,7 @@ label[for="items_per_page"] {
 
 /* Styles for the filter options menu */
 .filter-menu {
+  color:black;
   display: none;
   position: fixed;
   top: 50%;
@@ -402,6 +403,7 @@ label[for="items_per_page"] {
       $("#overlay").hide();
       $("#filter-menu").hide();
     });
+    
   });
 </script>
 <div id="overlay" class="overlay"></div>
@@ -449,17 +451,69 @@ label[for="items_per_page"] {
   <div class="search-results" id="search-results"></div>
 </div>
 <div class="filter-menu" id="filter-menu">
-  <!-- Add your advanced search options here -->
-  <label>Category:</label>
-  <select id="category-filter">
-    <option value="option1">Option 1</option>
-    <option value="option2">Option 2</option>
-    <!-- Add more options as needed -->
-  </select>
-  <!-- Add more filter options here -->
+  <form method="get" id="advanced-search-form">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="keyword">Keyword:</label>
+                <input type="text" name="keyword" id="keyword" class="form-control" placeholder="Enter keyword" value="{{ keyword|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label for="author_name">Author Name:</label>
+                <input type="text" name="author_name" id="author_name" class="form-control" placeholder="Enter author name" value="{{ author_name|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label for="categories">Categories:</label>
+                <select name="categories" id="categories" class="form-control" multiple>
+                    {% for category in categories %}
+                        <option value="{{ category.name }}" {% if category.name in categories %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sort_by">Sort By:</label>
+                <select name="sort_by" id="sort_by" class="form-control">
+                    <option value="alphabetic" {% if sort_by == 'alphabetic' %}selected{% endif %}>Alphabetic</option>
+                    <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="min_publication_year">Min Publication Year:</label>
+                <input type="text" name="min_publication_year" id="min_publication_year" class="form-control" placeholder="Enter min year" value="{{ min_publication_year|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label for="max_publication_year">Max Publication Year:</label>
+                <input type="text" name="max_publication_year" id="max_publication_year" class="form-control" placeholder="Enter max year" value="{{ max_publication_year|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label for="language">Language:</label>
+                <select name="language" id="language" class="form-control">
+                    {% for language in languages %}
+                        <option value="{{ language.LanguageName }}" {% if language.LanguageName == language %}selected{% endif %}>{{ language.LanguageName }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="min_review_count">Min Review Count:</label>
+                <input type="text" name="min_review_count" id="min_review_count" class="form-control" placeholder="Enter min count" value="{{ min_review_count|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label for="min_rating_value">Min Rating Value:</label>
+                <input type="text" name="min_rating_value" id="min_rating_value" class="form-control" placeholder="Enter min rating" value="{{ min_rating_value|default:'' }}">
+            </div>
+        </div>
+    </div>
+    <input type="hidden" name="page" value="{{ books.number }}">
+    <input type="hidden" name="items_per_page" value="{{ items_per_page }}">
+    <button type="submit" class="btn btn-primary" id="apply-filter">Apply Filter</button>
+</form>
 
-  <button id="apply-filter">Apply Filter</button>
+
 </div>
+
+
 
 <div class="collapse" id="allCategories">
   <ul class="row">
@@ -529,18 +583,18 @@ label[for="items_per_page"] {
       </div>
     {% endfor %}
   </div>
-  <div class="pagination">  
+  <div class="pagination">
     <span class="step-links">
         {% if books.has_previous %}
-            <a href="?page=1&items_per_page={{ items_per_page }}">&laquo; first</a>
-            <a href="?page={{ books.previous_page_number }}&items_per_page={{ items_per_page }}">previous</a>
+            <a href="?page=1&items_per_page={{ items_per_page }}{% if keyword %}&keyword={{ keyword }}{% endif %}{% if author_name %}&author_name={{ author_name }}{% endif %}{% for category in categories %}&categories={{ category }}{% endfor %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if min_publication_year %}&min_publication_year={{ min_publication_year }}{% endif %}{% if max_publication_year %}&max_publication_year={{ max_publication_year }}{% endif %}{% if language %}&language={{ language }}{% endif %}{% if min_review_count %}&min_review_count={{ min_review_count }}{% endif %}{% if min_rating_value %}&min_rating_value={{ min_rating_value }}{% endif %}">&laquo; first</a>
+            <a href="?page={{ books.previous_page_number }}&items_per_page={{ items_per_page }}{% if keyword %}&keyword={{ keyword }}{% endif %}{% if author_name %}&author_name={{ author_name }}{% endif %}{% for category in categories %}&categories={{ category }}{% endfor %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if min_publication_year %}&min_publication_year={{ min_publication_year }}{% endif %}{% if max_publication_year %}&max_publication_year={{ max_publication_year }}{% endif %}{% if language %}&language={{ language }}{% endif %}{% if min_review_count %}&min_review_count={{ min_review_count }}{% endif %}{% if min_rating_value %}&min_rating_value={{ min_rating_value }}{% endif %}">previous</a>
         {% endif %}
         
         <span class="current-page">{{ books.number }}</span>
         
         {% if books.has_next %}
-            <a href="?page={{ books.next_page_number }}&items_per_page={{ items_per_page }}">next</a>
-            <a href="?page={{ books.paginator.num_pages }}&items_per_page={{ items_per_page }}">last &raquo;</a>
+            <a href="?page={{ books.next_page_number }}&items_per_page={{ items_per_page }}{% if keyword %}&keyword={{ keyword }}{% endif %}{% if author_name %}&author_name={{ author_name }}{% endif %}{% for category in categories %}&categories={{ category }}{% endfor %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if min_publication_year %}&min_publication_year={{ min_publication_year }}{% endif %}{% if max_publication_year %}&max_publication_year={{ max_publication_year }}{% endif %}{% if language %}&language={{ language }}{% endif %}{% if min_review_count %}&min_review_count={{ min_review_count }}{% endif %}{% if min_rating_value %}&min_rating_value={{ min_rating_value }}{% endif %}">next</a>
+            <a href="?page={{ books.paginator.num_pages }}&items_per_page={{ items_per_page }}{% if keyword %}&keyword={{ keyword }}{% endif %}{% if author_name %}&author_name={{ author_name }}{% endif %}{% for category in categories %}&categories={{ category }}{% endfor %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}{% if min_publication_year %}&min_publication_year={{ min_publication_year }}{% endif %}{% if max_publication_year %}&max_publication_year={{ max_publication_year }}{% endif %}{% if language %}&language={{ language }}{% endif %}{% if min_review_count %}&min_review_count={{ min_review_count }}{% endif %}{% if min_rating_value %}&min_rating_value={{ min_rating_value }}{% endif %}">last &raquo;</a>
         {% endif %}
     </span>
 </div>

@@ -122,16 +122,30 @@ def add_book(request):
     categories = Category.objects.all()
     return render(request, 'books/add_book.html', {'form': form, 'categories': categories})
 
-def advanced_search(books, request):
-    keyword = request.GET.get('keyword')
-    author_name = request.GET.get('author_name')
-    categories = request.GET.getlist('categories')
-    sort_by = request.GET.get('sort_by')
-    min_publication_year = request.GET.get('min_publication_year')
-    max_publication_year = request.GET.get('max_publication_year')
-    language = request.GET.get('language')
-    min_review_count = request.GET.get('min_review_count')
-    min_rating_value = request.GET.get('min_rating_value')
+def extract_filter_params(request):
+    filter_params = {
+        'keyword': request.GET.get('keyword'),
+        'author_name': request.GET.get('author_name'),
+        'categories': request.GET.getlist('categories'),
+        'sort_by': request.GET.get('sort_by'),
+        'min_publication_year': request.GET.get('min_publication_year'),
+        'max_publication_year': request.GET.get('max_publication_year'),
+        'language': request.GET.get('language'),
+        'min_review_count': request.GET.get('min_review_count'),
+        'min_rating_value': request.GET.get('min_rating_value'),
+    }
+    return filter_params
+
+def advanced_search(books, filter_params):
+    keyword = filter_params['keyword']
+    author_name = filter_params['author_name']
+    categories = filter_params['categories']
+    sort_by = filter_params['sort_by']
+    min_publication_year = filter_params['min_publication_year']
+    max_publication_year = filter_params['max_publication_year']
+    language = filter_params['language']
+    min_review_count = filter_params['min_review_count']
+    min_rating_value = filter_params['min_rating_value']
 
     # Create a Q object to build the filter conditions
     filter_conditions = Q()
@@ -173,7 +187,10 @@ def advanced_search(books, request):
 def book_list(request):
     books = Books.objects.all()
     categories = Category.objects.all()
+    languages=Languages.objects.all()
     items_per_page = request.GET.get('items_per_page', 6)
+    filter_params = extract_filter_params(request)
+
     if (
         'keyword' in request.GET or
         'author_name' in request.GET or
@@ -186,10 +203,10 @@ def book_list(request):
         'min_rating_value' in request.GET
     ):
         # Call the filter_books function to filter the books
-        filtered_books = advanced_search(books, request)
+        books = advanced_search(books,filter_params)
     else:
         # No relevant GET parameters, use all books
-        filtered_books = books
+        books = books
     books_v2 = []
     for book in books:
         in_library = book_in_user_library(book, request.user)
@@ -201,12 +218,13 @@ def book_list(request):
         }
         books_v2.append(book_data)
     paginator = Paginator(books_v2, items_per_page)
-    page = request.GET.get('page')
+    page = request.GET.get('page',1)
     try:
         current_page = paginator.page(page)
     except PageNotAnInteger:
-        # Handle the case where the page is out of range
         current_page = paginator.page(1)
+    except EmptyPage:
+        current_page = paginator.page(paginator.num_pages) 
     user_cart = ShoppingCart.objects.filter(user=request.user).first()
     if user_cart:
         cart_item_count = user_cart.items.count()
@@ -215,12 +233,20 @@ def book_list(request):
         cart_item_count = 0
     # Create a list to store books with the 'in_library' attribute
 
-
     context = {
         'books': current_page,  # Pass the new list to the template
         'categories': categories,
+        'languages':languages,
         'items_per_page': items_per_page,
         'cart_item_count':cart_item_count,
+        'keyword': filter_params['keyword'],
+        'author_name': filter_params['author_name'],
+        'sort_by': filter_params['sort_by'],
+        'min_publication_year': filter_params['min_publication_year'],
+        'max_publication_year': filter_params['max_publication_year'],
+        'language': filter_params['language'],
+        'min_review_count': filter_params['min_review_count'],
+        'min_rating_value': filter_params['min_rating_value'],
     }
     return render(request, 'books/book_list.html', context)
 
