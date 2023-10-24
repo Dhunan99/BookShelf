@@ -1,55 +1,276 @@
 {% extends "user/home.html" %}
+{% block title %}<title>Stats</title>{% endblock title %}
 {% block content %}
 <style>
-    .container1 {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        color: #fff; /* Text color */
-    }
-
-    .stats-container1 {
-        text-align: center;
+    /* Your CSS styles here */
+    .stats-container {
         padding: 20px;
-        background-color: #444; /* Container background color */
-        border-radius: 10px; /* Rounded corners */
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Box shadow for container */
-    }
-
-    h1 {
-        font-size: 24px;
+        background-color: #444;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         margin-bottom: 20px;
+        color: white;
     }
 
-    p {
-        font-size: 18px;
-        margin: 10px 0;
+    /* Create a container for each pair of tables */
+    .table-container {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
     }
-    hr {
-        border-top: 1px solid #fff; /* White border color */
-        margin: 20px 0; /* Add margin to separate it from the content */
+
+    table {
+        width: calc(50% - 10px); /* Each table takes 50% of the container width with spacing between them */
+        border-collapse: collapse;
+        margin-bottom: 20px; /* Adjust margin as needed */
+        border-radius: 10px; /* Add rounded corners to the table */
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border: 1px solid #fffff2; /* Add a border to the cells */
+        text-align: center;
+    }
+
+    th {
+        background-color: #555;
+        color: white;
     }
 </style>
 <div class="container">
     <div class="breadcrumb">
         <a href="/">Home</a> /
-        <a href="/books/authors">Authors</a>
-      </div>
-<div class="container1">
-    
-    <div class="stats-container1">
-        <h1>Statistics</h1><hr >
-        <p>Total Users: {{ user_count }}</p>
-        <p>Total Books: {{ book_count }}</p>
-        <p>Total Authors: {{ author_count }}</p>
-        <p>Total Languages: {{ language_count }}</p>
-        <p>Total Categories: {{ category_count }}</p>
-        <p>Total Tags: {{ tag_count }}</p>
-        <p>Total Reviews: {{ review_count }}</p>
-        <p>Total Likes: {{ like_count }}</p>
-        <p>Total Social Media Links: {{ social_links }}</p>
+        <a href="/admin">Admin</a> /
+        <a href="">Stats</a>
     </div>
-</div>
+    <div class="stats-container">
+        <div class="table-container">
+        <!-- Create a container for each pair of tables -->
+        <table>
+            <tr>
+                <th colspan="2">Review Reports</th> <!-- Display the model name as the header -->
+            </tr>   
+            <tr>
+                <th>Statistic</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Dismissed Reports</td>
+                <td>{{ dismissed_reports }}</td>
+            </tr>
+            <tr>
+                <td>Pending Reports</td>
+                <td>{{ pending_reports }}</td>
+            </tr>
+            <tr>
+                <td>Total Reports</td>
+                <td>{{ report_count }}</td>
+            </tr>
+            
+        </table>
+        <table>
+            <tr>
+                <th colspan="2">Orders</th> <!-- Display the model name as the header -->
+            </tr>   
+            <tr>
+                <th>Statistic</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Successful Orders</td>
+                <td>{{ successful_orders }}</td>
+            </tr>
+            <tr>
+                <td>Failed Orders</td>
+                <td>{{ pending_orders }}</td>
+            </tr>
+            <tr>
+                <td>Aggregate Amount</td>
+                <td>{{ total_amount }}</td>
+            </tr>
+            <tr>
+                <td>Total Orders</td>
+                <td>{{ order_count }}</td>
+            </tr>
+        </table>
+    </div>
+        <div class="table-container">
+            <!-- Users Table -->
+            <table>
+                <tr>
+                    <th colspan="2">Users</th> <!-- Display the model name as the header -->
+                </tr>
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Active Users</td>
+                    <td>{{active_users}}</td>
+                </tr>
+                <tr>
+                    <td>Male Users</td>
+                    <td>{{male_users}}</td>
+                </tr>
+                <tr>
+                    <td>Female Users</td>
+                    <td>{{female_users}}</td>
+                </tr>
+                <tr>
+                    <td>Other Users</td>
+                    <td>{{other_users}}</td>
+                </tr>
+                <tr>
+                    <td>Users with undisclosed gender</td>
+                    <td>{{undisclosed}}</td>
+                </tr>
+                <tr>
+                    <td>Average user age</td>
+                    <td>{{average_age}}</td>
+                </tr>
+                <tr>
+                    <td>Total Users</td>
+                    <td>{{ user_count }}</td>
+                </tr>
+            </table>
+
+            <!-- Social Media Links Table -->
+            <table>
+                <tr>
+                    <th colspan="2">Social Media Links</th> <!-- Display the model name as the header -->
+                </tr>
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Total Social Media Links</td>
+                    <td>{{ social_links }}</td>
+                </tr>
+            </table>
+        </div> <!-- End of table container -->
+
+        <!-- Create similar table containers for other pairs of tables -->
+        <div class="table-container">
+            <!-- Authors Table -->
+            <table>
+                <tr>
+                    <th colspan="2">Authors</th> <!-- Display the model name as the header -->
+                </tr>
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Total Authors</td>
+                    <td>{{ author_count }}</td>
+                </tr>
+            </table>
+
+            <!-- Languages Table -->
+            <table>
+                <tr>
+                    <th colspan="2">Languages</th> <!-- Display the model name as the header -->
+                </tr>
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Total Languages</td>
+                    <td>{{ language_count }}</td>
+                </tr>
+            </table>
+        </div> <!-- End of table container -->
+
+        <!-- Create similar table containers for other pairs of tables -->
+        <!-- Categories Table -->
+        <div class="table-container">
+            <table>
+                <tr>
+                    <th colspan="2">Categories</th> <!-- Display the model name as the header -->
+                </tr>
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Total Categories</td>
+                    <td>{{ category_count }}</td>
+                </tr>
+            </table>
+
+            <!-- Tags Table -->
+            <table>
+                <tr>
+                    <th colspan="2">Tags</th> <!-- Display the model name as the header -->
+                </tr>
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Total Tags</td>
+                    <td>{{ tag_count }}</td>
+                </tr>
+            </table>
+        </div> <!-- End of table container -->
+
+        <!-- Create similar table containers for other pairs of tables -->
+        <div class="table-container">
+            <!-- Books Table -->
+            <table>
+                <tr>
+                    <th colspan="2">Books</th> <!-- Display the model name as the header -->
+                </tr>
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Books with ratings</td>
+                    <td>{{books_with_rating}}</td>
+                </tr>
+                <tr>
+                    <td>Total Books</td>
+                    <td>{{ book_count }}</td>
+                </tr>
+            </table>
+
+            <!-- Reviews Table -->
+            <table>
+                <tr>
+                    <th colspan="2">Reviews</th> <!-- Display the model name as the header -->
+                </tr>
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Total Reviews</td>
+                    <td>{{ review_count }}</td>
+                </tr>
+            </table>
+        </div> <!-- End of table container -->
+
+        <!-- Likes Table -->
+        <div class="table-container">
+            <table>
+                <tr>
+                    <th colspan="2">Likes</th> <!-- Display the model name as the header -->
+                </tr>   
+                <tr>
+                    <th>Statistic</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Total Likes</td>
+                    <td>{{ like_count }}</td>
+                </tr>
+            </table>
+        </div> <!-- End of table container -->
+        
+    </div>
 </div>
 {% endblock content %}

@@ -1,0 +1,110 @@
+{% extends "books/book_list.html" %}
+{% block title %}<title>Books by {{author.AuthorName}}</title>{% endblock %}
+{% block content %}
+<style>
+    <style>
+        body {
+            background-color: #1e1e1e; /* Dark background color */
+            color: #fff; /* Light text color for better readability */
+            text-align: center; /* Center-align content */
+        }
+    
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #a4a4a4;
+            text-transform: uppercase;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            padding-top:10px;
+            margin-left: 20px;
+        }
+        
+    
+        .table-container {
+            overflow-x: auto; /* Add horizontal scroll for small screens */
+        }
+    
+        .reason {
+            max-width: 300px;
+            overflow: hidden;
+            white-space: nowrap;
+            color: #fff;
+            cursor: pointer;
+            user-select: none;
+        }
+    
+        /* Expand the reason content when the "expanded" class is present */
+        .reason.expanded {
+            overflow: auto;
+            white-space: pre-wrap;
+            max-height: none;
+        }
+    
+</style>
+
+<script>
+    function toggleReasonExpansion(reasonElement) {
+        reasonElement.classList.toggle("expanded");
+    }
+    function dismissReport(reportId) {
+        // Perform an AJAX request to dismiss the report
+        $.ajax({
+            url: "{% url 'dismiss_report' %}",
+            type: "POST",
+            data: {
+                report_id: reportId,
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            },
+            success: function (data) {
+                var clickedButton = $(`button[onclick^="dismissReport(${reportId})"]`);
+                var closestTr = clickedButton.closest('tr');
+                closestTr.remove();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                // Handle errors
+                console.error("Error:", errorThrown);
+            }
+        });
+    }
+</script>
+<script>
+    function deleteReview(reviewId) {
+        // Perform an AJAX request to delete the review
+        $.ajax({
+            url: "{% url 'delete_review_2' %}",
+            type: "POST",
+            data: {
+                review_id: reviewId,
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            },
+            success: function (data) {
+                var clickedButton = $(`button[onclick^="deleteReview(${reviewId})"]`);
+                var closestTr = clickedButton.closest('tr');
+                closestTr.remove();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                // Handle errors
+                console.error("Error:", errorThrown);
+            }
+        });
+    }
+</script>
+<script>
+    function redirectToBookReview(bookId, username) {
+        // Construct the URL using the provided parameters
+        const url = `/books/book/${bookId}/#reviewer${username}`;
+        
+        // Redirect the user to the specified URL
+        window.location.href = url;
+    }
+</script>
+<div class="container table-container" style="min-height:450px;">
+    <div class="breadcrumb">
+        <a href="/admin">Admin</a> /
+        <a href="">All Purchases</a>
+      </div>
+    <h1>Reports</h1>
+    
+</div>
+{% endblock %}

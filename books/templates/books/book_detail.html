@@ -1087,7 +1087,11 @@ button#submitReport:hover {
     <div class="col-md-8 col-custom-width text-white">
       {% if chapters %}
       <div class="container1">
-          <h2>Chapters</h2>
+        {% if preview %}
+        <h2>Preview</h2>
+        {% else %}
+        <h2>Chapters</h2>
+        {% endif %}
           <div class="row">
               <div class="col-md-6 offset-md-3">
                   <div class="scrollable-container">
@@ -1112,16 +1116,24 @@ button#submitReport:hover {
         </div>
       </div>{% endif %}
       <div class="d-flex justify-content-end align-items-center mt-3">
+        <a href="/books/book/{{book.BookID}}" class="chap-list cusomt" style="margin-left:15px;">Description</a>
         {% if book_in_library %}
-          <a href="/books/book/{{book.BookID}}" class="chap-list cusomt" style="margin-left:15px;">Description</a>
           <form method="get" style="background-color:#1a1a1a;color:white;">
             <input type="hidden" name="chapter_list" value="True">
             <button type="submit" class="chap-list">Chapter List</button>
         </form>
         {% elif in_cart %}
+        <form method="get" style="background-color:#1a1a1a;color:white;">
+          <input type="hidden" name="preview" value="True">
+          <button type="submit" class="chap-list">Preview</button>        
+        </form>
         <a href="{% url "cart_view" %}" class="btn btn-success btn-sm" style="margin-right:10px;font-size:18px"><i class="fa-solid fa-cart-shopping"></i></a>
           <a href="{% url 'pay_home' book_id=book.BookID %}" class="btn btn-primary">Buy Now</a>
         {% else %}
+        <form method="get" style="background-color:#1a1a1a;color:white;">
+        <input type="hidden" name="preview" value="True">
+            <button type="submit" class="chap-list" >Preview</button>
+        </form>
         <a href="{% url 'add_to_cart' book_id=book.BookID %}" class="btn btn-info" style="margin-right:10px;">Add to Cart</a>
         <a href="{% url 'pay_home' book_id=book.BookID %}" class="btn btn-primary">Buy Now</a>  
         {% endif %}

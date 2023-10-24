@@ -496,11 +496,51 @@
             color: #fff; /* Set text color */
             /* Add other paragraph styling as needed */
         }
+        /* Style the select dropdown */
+.goog-te-combo {
+    padding: 8px; /* Add padding for spacing */
+    font-size: 14px; /* Set font size */
+    border: 1px solid #ccc; /* Add a border */
+    border-radius: 4px; /* Add rounded corners */
+    background-color: #fff; /* Background color */
+    color: #333; /* Text color */
+}
+
+/* Style the select dropdown when it's hovered */
+.goog-te-combo:hover {
+    border-color: #666; /* Change border color on hover */
+}
+
+/* Style the select dropdown when it's focused (clicked) */
+.goog-te-combo:focus {
+    outline: none; /* Remove the default focus outline */
+    border-color: #007bff; /* Change border color on focus */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add a shadow on focus */
+}
+
+/* Style the dropdown arrow */
+.goog-te-combo-arrow {
+    font-size: 12px; /* Adjust arrow size */
+}
+
+/* Style the dropdown options */
+.goog-te-menu-value {
+    font-size: 14px; /* Set font size for options */
+    color: #333; /* Text color for options */
+    background-color: #fff; /* Background color for options */
+}
+
+/* Style the dropdown options on hover */
+.goog-te-menu-value:hover {
+    background-color: #007bff; /* Change background color on hover */
+    color: #fff; /* Text color on hover */
+}
+
     </style>
     {% block style %}{% endblock style %}
 </head>
 <body>
-    <div class="navbar">
+    <div class="navbar notranslate  ">
         <div class="navbar-logo">
             <div class="animated swing">
                 <img src="{% static 'img/logo.png' %}" alt="Website Logo" class="hover-image" id="home1">
@@ -525,6 +565,7 @@
                 <a href="/admin">Dashboard</a>
                 <a href="/books/reports/">Review Moderation</a>
             <a href="/statistics">Stats</a>
+            {% comment %} <a href="/orders">Purchases</a> {% endcomment %}
             </div>
         </div>
         {% endif %}
@@ -605,7 +646,7 @@
         
     </div>
     {% endblock content %}
-    <footer class="bg-dark text-light py-4">
+    <footer class="bg-dark text-light py-4 notranslate">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-2">

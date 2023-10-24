@@ -133,6 +133,7 @@ def extract_filter_params(request):
         'language': request.GET.get('language'),
         'min_review_count': request.GET.get('min_review_count'),
         'min_rating_value': request.GET.get('min_rating_value'),
+        'sort_order':request.GET.get('sort_order')
     }
     return filter_params
 
@@ -141,6 +142,7 @@ def advanced_search(books, filter_params):
     author_name = filter_params['author_name']
     categories = filter_params['categories']
     sort_by = filter_params['sort_by']
+    sort_order = filter_params['sort_order']
     min_publication_year = filter_params['min_publication_year']
     max_publication_year = filter_params['max_publication_year']
     language = filter_params['language']
@@ -157,7 +159,11 @@ def advanced_search(books, filter_params):
         filter_conditions &= Q(Author__AuthorName__icontains=author_name)
 
     if categories:
-        filter_conditions &= Q(Categories__name__in=categories)
+        category_conditions = Q()
+        for category in categories:
+            category_conditions |= Q(Categories__name=category)
+        filter_conditions &= category_conditions
+
 
     if min_publication_year:
         filter_conditions &= Q(PublicationYear__gte=min_publication_year)
@@ -175,11 +181,18 @@ def advanced_search(books, filter_params):
         filter_conditions &= Q(rating__gte=min_rating_value)
 
     if sort_by == 'alphabetic':
-        books = books.order_by('Title')
+        if sort_order == 'asc':
+            books = books.order_by('Title')
+        elif sort_order == 'desc':
+            books = books.order_by('-Title')
     elif sort_by == 'price':
-        books = books.order_by('Price')
+        if sort_order == 'asc':
+            books = books.order_by('Price')
+        elif sort_order == 'desc':
+            books = books.order_by('-Price')
 
     filtered_books = books.filter(filter_conditions).distinct()
+
     return filtered_books
 
 
@@ -247,6 +260,8 @@ def book_list(request):
         'language': filter_params['language'],
         'min_review_count': filter_params['min_review_count'],
         'min_rating_value': filter_params['min_rating_value'],
+        'categories_2':filter_params['categories'],
+        'sort_order':filter_params['sort_order']
     }
     return render(request, 'books/book_list.html', context)
 
@@ -296,7 +311,7 @@ def book_list_by_category(request, category):
     return render(request, 'books/book_list.html', context)
 
 @login_required
-def extract_chapters_from_epub(request, book_id):
+def extract_chapters_from_epub(request, book_id, limit=None):
     try:
         book = get_object_or_404(Books, pk=book_id)
 
@@ -322,8 +337,17 @@ def extract_chapters_from_epub(request, book_id):
 
                             if len(chapter_content.content.decode('utf-8')) > 900:
                                 chapters.append({'title': title, 'url': chapter_url})
+
+                            # Check if limit is reached and break loop if needed
+                            if limit is not None and len(chapters) >= limit:
+                                break
+                    
+                    # Check if limit is reached and break loop if needed
+                    if limit is not None and len(chapters) >= limit:
+                        break
                     
             return chapters
+
 
     except Exception as e:
         return render(request, 'books/error.html', {'error_message': str(e)})
@@ -331,6 +355,7 @@ def extract_chapters_from_epub(request, book_id):
 @login_required
 def book_detail(request, book_id, form=None):
     trigger=request.GET.get('chapter_list',None)
+    trigger2=request.GET.get('preview')
     book = get_object_or_404(Books, pk=book_id)
     user = request.user
     user_library, created = UserLibrary.objects.get_or_create(user=user)
@@ -372,6 +397,10 @@ def book_detail(request, book_id, form=None):
     }
     if trigger == "True":
         context['chapters'] = extract_chapters_from_epub(request,book_id)
+    elif trigger2=="True":
+        context['chapters'] = extract_chapters_from_epub(request,book_id,limit=8)
+        context['preview']=True
+
     return render(request, 'books/book_detail.html', context)
 
 @user_passes_test(user_is_superuser)
@@ -797,7 +826,11 @@ def chapter_view(request, book_id, chapter_number):
                 modified_content = str(soup)
 
                 # Extract chapters from the EPUB and find prev and next chapters
-                chapters = extract_chapters_from_epub(request, book_id)
+                lib=UserLibrary.objects.filter(user=request.user).first()
+                if book in lib.books.all():
+                    chapters = extract_chapters_from_epub(request, book_id)
+                else:
+                    chapters = extract_chapters_from_epub(request, book_id,limit=8)
                 prev_chapter = None
                 next_chapter = None
                 for i in range(len(chapters)):

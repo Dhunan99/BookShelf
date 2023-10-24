@@ -1,6 +1,17 @@
 {% extends "user/home.html" %}
+{% block title %}
+<title>Chapter</title>
+{% endblock title %}
 {% block style %}
 <style>
+    body{
+        top: 0px !important; 
+        position: static !important; 
+        }
+        
+        .goog-te-banner-frame{
+        display:none !important
+        }
     .content1,.contents {
         text-align: center; /* Center align the content */
         /* Add padding around the content */
@@ -163,6 +174,58 @@
     left: 0;
     z-index: 9999;
     transition: width 0.3s;
+}
+a[href="https://translate.google.com"] {
+display:none;}
+.skiptranslate {
+    display:none !important
+    }
+#google_translate_element .skiptranslate{
+    display: inline !important;
+
+}
+.goog-te-gadget{
+    color: transparent !important;
+}
+/* Dark Theme for the select dropdown */
+.goog-te-combo {
+    padding: 8px; /* Add padding for spacing */
+    font-size: 14px; /* Set font size */
+    border: 1px solid #666; /* Dark border */
+    border-radius: 4px; /* Add rounded corners */
+    background-color: #333; /* Dark background color */
+    color: #fff; /* Light text color */
+}
+
+/* Style the select dropdown when it's hovered */
+.goog-te-combo:hover {
+    border-color: #999; /* Darker border color on hover */
+}
+
+/* Style the select dropdown when it's focused (clicked) */
+.goog-te-combo:focus {
+    outline: none; /* Remove the default focus outline */
+    border-color: #007bff; /* Change border color on focus */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add a shadow on focus */
+}
+
+/* Style the dropdown arrow */
+.goog-te-combo-arrow {
+    font-size: 12px; /* Adjust arrow size */
+    color: #fff; /* Light arrow color */
+}
+
+/* Style the dropdown options */
+.goog-te-menu-value {
+    font-size: 14px; /* Set font size for options */
+    color: #fff; /* Light text color for options */
+    background-color: #333; /* Dark background color for options */
+}
+
+/* Style the dropdown options on hover */
+.goog-te-menu-value:hover {
+    background-color: #007bff; /* Change background color on hover */
+    color: #fff; /* Light text color on hover */
 }
 
 </style>
@@ -400,15 +463,27 @@
         window.addEventListener('scroll', updateReadingProgressBar);
     });
 </script>
+<script type="text/javascript"> 
+    function googleTranslateElementInit() {
+   new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+   }
+ </script>
+ 
+ <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+ 
 {% endblock style %}
 
 
 {% block content %}
+
 <div id="reading-progress-bar"></div>
-<div class="content1">
-    <div class="book-details">
+<div class="content1 ">
+    <div class="book-details notranslate">
         <div class="book-title"><a href="/books/book/{{book.BookID}}/">{{ book.Title }}</a></div>
-        <div class="author-name"><a href="/books/author_works/{{book.Author.pk}}/">{{ book.Author }}</a></div>
+        <div class="author-name"><a href="/books/author_works/{{book.Author.pk}}/">{{ book.Author }}</a></div><br>
+        <div ><span>Select Language: </span>
+
+            <div id="google_translate_element"></div></div>
         <div class="options-panel" id="options-panel">
             <h2>Options</h2>
             <div>
@@ -457,7 +532,7 @@
         
     </div>
     
-    <div class="navigation-buttons">
+    <div class="navigation-buttons notranslate">
         {% if prev_chapter %}
         <a href="{{ prev_chapter }}" class="prev-button">Previous</a>
         {% endif %}
@@ -466,8 +541,8 @@
         <a href="{{ next_chapter }}" class="next-button">Next</a>
         {% endif %}
     </div>
-    <button class="options-button" id="options-button" style="float:right;" onclick="toggle_options()">Options</button>
-    <div class="contents">{{ chapter_content|safe }}</div>
+    <button class="options-button notranslate" id="options-button" style="float:right;" onclick="toggle_options()">Options</button>
+    <div class="contents" id="translate-content">{{ chapter_content|safe }}</div>
     
     <div class="navigation-buttons">
         <a href="{{ prev_chapter }}" class="prev-button">Previous</a>
