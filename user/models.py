@@ -100,3 +100,16 @@ class Notification(models.Model):
         elif self.notification_type == NotificationType.FRIEND_REQUEST:
             return f'{self.sender} sent you a friend request.'
         # Add more notification messages as needed
+class UserActivity(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    last_activity = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return f'{self.user} was last active at {self.last_activity}'
+class Message(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender} to {self.receiver}: {self.content}"

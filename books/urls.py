@@ -26,5 +26,4 @@ urlpatterns = [
     path('reports/', views.report_list, name='report_list'),
     path('dismiss_report/', views.dismiss_report, name='dismiss_report'),
     path('delete_review_2/', views.delete_review_2, name='delete_review_2'),
-
 ]

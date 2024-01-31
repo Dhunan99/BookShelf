@@ -23,6 +23,8 @@ urlpatterns = [
     path('get-notifications/',views.notifications_view,name="notifications_view"),
     path('mark-notifications-as-read/', views.mark_notifications_as_read, name='mark_notifications_as_read'),
     path('generate-receipt/', views.generate_receipt, name='generate_receipt'),
-
+    path('user_view/<str:username>',views.user_view, name="user_view"),
+    path('send_message/', views.send_message, name='send_message'),
+    path('refresh_messages/', views.refresh_messages_view, name='refresh_messages'),
 
 ]

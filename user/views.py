@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth import login as lg, authenticate
 from django.contrib.auth.models import User
@@ -10,7 +10,7 @@ from django.contrib.auth.views import PasswordResetView,PasswordResetDoneView,Pa
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib.auth.models import User
-from .models import OTPModel,ShoppingCart,PurchaseHistory,Notification
+from .models import OTPModel,ShoppingCart,PurchaseHistory,Notification,UserActivity,UserProfile
 from pyotp import TOTP
 from django.http import JsonResponse
 import secrets
@@ -27,6 +27,14 @@ from xhtml2pdf import pisa
 from io import BytesIO
 from decimal import Decimal
 from django.views.decorators.cache import cache_control
+from django.db.models import Sum
+from .models import Message
+from django.db import models
+import json
+from django.db.models import Q
+from datetime import timedelta
+
+
   # Import User model
 # from django.contrib import messages
 # from django.contrib.auth import authenticate, login
@@ -152,7 +160,7 @@ class ChangePasswordView(PasswordChangeView):
 
 def validate_username(request):
     username = request.GET.get('username', None)
-    data = {
+    data = {    
         'is_taken': User.objects.filter(username__iexact=username).exists()
     }
     return JsonResponse(data)
@@ -232,8 +240,8 @@ def save_profile(request):
             form = UserBioChangeForm(post_data, instance=request.user)
             if form.is_valid():
                 form.save()
-            allowed_fields = ('gender', 'dob')
-            post_data = {key: request.POST[key] for key in allowed_fields}
+            allowed_fields = ('gender', 'dob','bio')
+            post_data = {key: request.POST[key].strip() for key in allowed_fields}
             form=UserBioChangeForm2(post_data, instance=request.user.userprofile)
             if form.is_valid():
                 form.save()
@@ -359,7 +367,80 @@ def generate_receipt(request):
         )
     return response
 
-    return HttpResponse("Invalid request")
+@login_required
+def user_view(request,username):
+    context={}
+    user=User.objects.get(username=username)
+    act=UserActivity.objects.get(user=user)
+    if user:
+        threshold = timezone.now() - timezone.timedelta(minutes=15)
+        user_activity = UserActivity.objects.filter(user=user, last_activity__gte=threshold)
+        if user_activity:
+            status="Online"
+        else:
+            status="Offline"
+        if act:
+            profile = UserProfile.objects.get(user=user)
+            purchase_history = PurchaseHistory.objects.filter(user=user)
+            messages = Message.objects.filter(
+                Q(sender=request.user, receiver=user) | Q(sender=user, receiver=request.user)
+            ).order_by('timestamp')
+            context = {
+                'user_prof': user,
+                'profile': profile,
+                'is_author': profile.is_author,
+                'total_money_spent': purchase_history.aggregate(total_price=Sum('total_price'))['total_price'] or 0,
+                'gender': profile.gender,
+                'books_bought':sum(history.items.count() for history in purchase_history),
+                'dob': profile.dob,
+                'last_activity':act.last_activity.strftime('%b. %d, %Y, %I:%M %p'),
+                'status':status,
+                'messages':messages
+            }
+            print(act.last_activity)
+    return render(request, 'user/ext_prof.html',context)
+
+@login_required
+def send_message(request):
+    if request.method == 'POST':
+        data = json.loads(request.body.decode('utf-8'))
+        receiver_username = data.get('receiver')
+        content = data.get('content')
+
+        # Create and save the message
+        message = Message.objects.create(sender=request.user, receiver=User.objects.get(username=receiver_username), content=content)
+
+        return JsonResponse({'success': True})
+    else:
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def refresh_messages_view(request):
+    last_timestamp = request.GET.get('last_timestamp')
+    if not last_timestamp:
+        return JsonResponse({'error': 'Invalid last timestamp'}, status=400)
+    # Convert the last_timestamp to a datetime object
+    last_timestamp = timezone.datetime.fromisoformat(last_timestamp)
+
+    # Retrieve new messages after last_timestamp
+    new_messages = Message.objects.filter(
+    receiver=request.user,
+    timestamp__gte=last_timestamp + timedelta(seconds=1)
+).order_by('timestamp')
+
+    # Serialize the new messages
+    serialized_messages = []
+    for message in new_messages:
+        serialized_message = {
+            'content': message.content,
+            'sender': message.sender.username,
+            'timestamp': message.timestamp.isoformat(),
+        }
+        serialized_messages.append(serialized_message)
+
+    return JsonResponse({'messages': serialized_messages})
+
+
 
 # def register(request):
     # if request.method == 'POST':

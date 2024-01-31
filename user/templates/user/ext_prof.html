@@ -1,0 +1,406 @@
+{% extends 'user/home.html' %}
+{% load tz %}
+{% load static %}
+{% block title %}
+    <title>User Profile</title>
+{% endblock title %}
+{% block content %}
+<style>
+
+    #user-profile-body {
+        background-color: #343a40;
+        color: #fff;
+    }
+
+    #user-profile-container {
+        background-color: #454d55;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 60%;
+        margin: auto;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        max-width: fit-content;
+    }
+
+    #user-profile-tabs .nav-link {
+        color: #fff;
+        background-color: #343a40;
+        border: 1px solid #555;
+        border-radius: 0;
+    }
+
+    #user-profile-tabs .nav-link.active {
+        color: #000;
+        background-color: #fff;
+        border-color: #555;
+    }
+
+    #user-profile-content {
+        background-color: #454d55;
+        color: #fff;
+        padding: 20px;
+        border-radius: 0 0 10px 10px;
+        min-height: 55vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .profile-image-container {
+        margin-bottom: 20px;
+    }
+
+    .profile-details {
+        margin-top: 20px;
+    }
+
+    .profile-details p {
+        margin-bottom: 10px;
+    }
+
+    .user-activity {
+        margin-top: 20px;
+    }
+    #status-element {
+        text-align: center;
+    }
+    #messages-content {
+      background-color: #fff;
+      padding: 20px;
+      height: 300px; /* Set your desired height for the chat window */
+      overflow-y: scroll; /* Enable vertical scrolling */
+    }
+    #messages-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%; /* Take full height of the container */
+  }
+
+  #messages-content {
+      background-color: #fff;
+      padding: 20px;
+      flex-grow: 1; /* Expand to fill available space */
+      overflow-y: scroll; /* Enable vertical scrolling */
+      scrollbar-width: thin; /* Firefox */
+  }
+
+  #messages-content::-webkit-scrollbar {
+      width: 10px; /* Set the width of the scrollbar */
+  }
+
+  #messages-content::-webkit-scrollbar-thumb {
+      background-color: #4CAF50; /* Color of the scrollbar thumb */
+      border-radius: 5px; /* Radius of the scrollbar thumb */
+  }
+
+  #messages-content::-webkit-scrollbar-track {
+      background-color: #ddd; /* Color of the scrollbar track */
+      border-radius: 5px; /* Radius of the scrollbar track */
+  }
+
+
+.message {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  max-width: 70%;
+}
+.notice{
+  background-color:grey;
+  margin:auto;
+  margin-bottom: 10px;
+}
+.sender {
+  background-color: green; /* Green color for sender messages */
+  margin-left: auto; /* Push sender messages to the right */
+}
+
+.viewer {
+  background-color: blue; /* Blue color for viewer messages */
+  margin-right: auto; /* Push viewer messages to the left */
+}
+form{
+margin-top:15px;  
+
+}
+.right{
+  margin-left:100px;;
+}
+
+</style>
+<!-- Include this script in your HTML file -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Get the UTC time string from the span
+      var utcTimeString = document.getElementById('last_time').textContent;
+
+      // Convert the UTC time string to a JavaScript Date object
+      var utcTime = new Date(utcTimeString);
+
+      // Convert UTC time to local time
+      var localTime = new Date(utcTime.getTime() - (utcTime.getTimezoneOffset()) * 60000);
+      // Format local time manually (adjust format as needed)
+      var formattedLocalTime = localTime.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true
+      });
+
+      // Update the span content with the local time
+      document.getElementById('last_time').textContent = formattedLocalTime;
+  });
+</script>
+<script>
+  $(document).ready(function () {
+    const form = $('#message-form');
+    const messageInput = $('#message-input');
+    const messagesContainer = $('.real-messages');
+    const scrollwindow=$('#messages-content');
+    scrollwindow.scrollTop(scrollwindow[0].scrollHeight);
+    const receiverUsername = $('#receiver-username').text();
+    const click = $('#messages-tab');
+    click.on("click", function () {
+      // Wait for 1 second before executing the scroll
+      setTimeout(function () {
+          scrollwindow.scrollTop(messagesContainer[0].scrollHeight);
+      }, 500); // 1000 milliseconds = 1 second
+  });
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    form.submit(function (e) {
+      e.preventDefault();
+
+      const content = messageInput.val().trim();
+      if (content !== '') {
+        // Use $.ajax to send the message
+        $.ajax({
+          type: 'POST',
+          url: `{% url "send_message" %}`,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+          },
+          data: JSON.stringify({ receiver: receiverUsername, content }),
+          dataType: 'json',
+          success: function (data) {
+            if (data.success) {
+              // Clear input and update messages
+              messageInput.val('');
+              appendMessage(content, '{{ request.user.username }}');
+            } else {
+              console.error('Failed to send message:', data.error);
+            }
+          },
+        });
+      }
+    });
+    function appendMessage(content, sender, timestamp) {
+      // Create a new message div
+      var messageDiv = $('<div class="message"></div>');
+    
+      // Set the class based on the sender
+      if (sender === '{{ request.user.username }}') {
+        messageDiv.addClass('sender');
+      } else {
+        messageDiv.addClass('viewer');
+      }
+    
+      // Create a paragraph element for the message content
+      var messageContent = $('<p></p>').text(content);
+    
+      // Parse the timestamp and convert to UTC
+      var utcTimestamp = moment(timestamp).utc();
+    
+      // Format the timestamp in the desired format
+      var formattedTimestamp = utcTimestamp.format('MMM. DD, YYYY, h:mm:ss a');
+    
+      // Set the data-timestamp attribute with the formatted timestamp
+      messageDiv.attr('data-timestamp', formattedTimestamp);
+    
+      // Append the content to the message div
+      messageDiv.append(messageContent);
+    
+      // Append the message div to the messages container
+      messagesContainer.append(messageDiv);
+    
+      // Scroll to the bottom to show the latest message
+      scrollwindow.scrollTop(messagesContainer[0].scrollHeight);
+    }
+    
+    
+  
+  // Function to format the timestamp as desired (adjust as needed)
+    function refreshMessages() {
+      // Get the timestamp of the last message
+      var lastTimestamp = $('.real-messages .message:last').attr('data-timestamp');
+      var parsedDate = moment.utc(lastTimestamp, 'MMM. DD, YYYY, h:mm:ss a');
+      var isoLastTimestamp = parsedDate.toISOString();
+      // Use $.ajax to get new messages
+      $.ajax({
+        type: 'GET',
+        url: `{% url "refresh_messages" %}`,
+        data: { last_timestamp: isoLastTimestamp  },
+        dataType: 'json',
+        success: function (data) {
+          if (data.messages.length > 0) {
+            // Append each new message to the messages container
+            data.messages.forEach(function (message) {
+              appendMessage(message.content, message.sender, message.timestamp);
+            });
+
+            // Scroll to the bottom to show the latest message
+            scrollwindow.scrollTop(messagesContainer[0].scrollHeight);
+          }
+        },
+      });
+    }
+    setInterval(refreshMessages, 4000);
+      
+
+
+    // Attach the load event to the container
+  });
+</script>
+
+<div id="user-profile-container">
+    <ul id="user-profile-tabs" class="nav nav-tabs justify-content-center">
+        <li class="nav-item">
+            <a class="nav-link active" id="info-tab" data-toggle="tab" href="#info-content">Info</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="messages-tab" data-toggle="tab" href="#messages-content">Messages</a>
+        </li>
+        <!-- Add more tabs as needed -->
+    </ul>
+
+    <div id="user-profile-content" class="tab-content">
+        <div id="info-content" class="tab-pane fade show active">
+            
+            <!-- Content for Info Tab -->
+            <div class="profile-image-container">
+                {% if user_prof.userprofile.profile_image %}
+                    <div class="d-flex justify-content-center align-items-center">
+                        <img src="{{ user_prof.userprofile.profile_image.url }}" alt="Profile Image" class="img-fluid rounded-circle border border-secondary image" width="150px" height="150px">
+                    </div>
+                    {% if status == "Online" %}<div id="status-element">
+                    Status: Online
+                    <svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"  width="20" height="20" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:cc="http://creativecommons.org/ns#" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" xmlns:ns1="http://sozi.baierouge.fr" id="svg2" sodipodi:docname="check.svg" viewBox="0 0 442.79 410.38" sodipodi:version="0.32" version="1.0" inkscape:output_extension="org.inkscape.output.svg.inkscape" inkscape:version="0.46+devel">
+                        <title id="title4072">Check mark</title>
+                        <sodipodi:namedview id="base" inkscape:zoom="0.24748737" borderopacity="1.0" inkscape:current-layer="layer1-2" inkscape:cx="-197.36427" guidetolerance="10" showgrid="false" showguides="true" bordercolor="#666666" inkscape:window-x="0" inkscape:guide-bbox="true" inkscape:snap-smooth-nodes="true" objecttolerance="10" inkscape:object-nodes="true" inkscape:window-y="27" inkscape:window-width="1400" inkscape:pageopacity="0.0" inkscape:pageshadow="2" pagecolor="#ffffff" inkscape:cy="180.24958" inkscape:document-units="px" inkscape:window-height="993"/>
+                        <g id="layer1" inkscape:label="Ebene 1" inkscape:groupmode="layer" transform="translate(1160 40.93)">
+                          <g id="layer1-2" inkscape:label="Ebene 1" transform="matrix(.48018 0 0 .48018 -316.23 468.11)">
+                            <path id="path4068" sodipodi:nodetypes="ccccc" style="stroke:#000000;stroke-width:19.892;fill:#139e1c" d="m-1747.2-549.3 287.72 333.9c146.6-298.83 326.06-573.74 614.52-834.75-215.89 121.82-453.86 353.14-657.14 639.38l-245.1-138.53z"/>
+                          </g>
+                        </g>
+                        <metadata>
+                          <rdf:RDF>
+                            <cc:Work>
+                              <dc:format>image/svg+xml</dc:format>
+                              <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+                              <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+                              <dc:publisher>
+                                <cc:Agent rdf:about="http://openclipart.org/">
+                                  <dc:title>Openclipart</dc:title>
+                                </cc:Agent>
+                              </dc:publisher>
+                              <dc:title>Check mark</dc:title>
+                              <dc:date>2009-06-12T15:32:30</dc:date>
+                              <dc:description>An all-purpose check mark</dc:description>
+                              <dc:source>https://openclipart.org/detail/26557/check-mark-by-raemi</dc:source>
+                              <dc:creator>
+                                <cc:Agent>
+                                  <dc:title>raemi</dc:title>
+                                </cc:Agent>
+                              </dc:creator>
+                              <dc:subject>
+                                <rdf:Bag>
+                                  <rdf:li>colour</rdf:li>
+                                  <rdf:li>correct</rdf:li>
+                                  <rdf:li>icon</rdf:li>
+                                  <rdf:li>mark</rdf:li>
+                                  <rdf:li>passed</rdf:li>
+                                  <rdf:li>sign</rdf:li>
+                                  <rdf:li>symbol</rdf:li>
+                                </rdf:Bag>
+                              </dc:subject>
+                            </cc:Work>
+                            <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+                              <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+                              <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+                              <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+                            </cc:License>
+                          </rdf:RDF>
+                        </metadata>
+                      </svg>
+                    </div>
+                    {% else %}
+                    <div id="status-element">
+                        Status: Offline
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" width="122.879px" height="122.879px" viewBox="0 0 122.879 122.879" enable-background="new 0 0 122.879 122.879" xml:space="preserve"><g><path fill-rule="evenodd" clip-rule="evenodd" fill="#FF4141" d="M61.44,0c33.933,0,61.439,27.507,61.439,61.439 s-27.506,61.439-61.439,61.439C27.507,122.879,0,95.372,0,61.439S27.507,0,61.44,0L61.44,0z M73.451,39.151 c2.75-2.793,7.221-2.805,9.986-0.027c2.764,2.776,2.775,7.292,0.027,10.083L71.4,61.445l12.076,12.249 c2.729,2.77,2.689,7.257-0.08,10.022c-2.773,2.765-7.23,2.758-9.955-0.013L61.446,71.54L49.428,83.728 c-2.75,2.793-7.22,2.805-9.986,0.027c-2.763-2.776-2.776-7.293-0.027-10.084L51.48,61.434L39.403,49.185 c-2.728-2.769-2.689-7.256,0.082-10.022c2.772-2.765,7.229-2.758,9.953,0.013l11.997,12.165L73.451,39.151L73.451,39.151z"/></g></svg>
+                        </div>
+                    {% endif %}
+                    
+                {% else %}
+                    <div class="d-flex justify-content-center align-items-center">
+                        <img src="{% static 'img/def_png.png' %}" alt="Profile Image" class="img-fluid rounded-circle border border-secondary" width="150px">
+                    </div>
+                {% endif %}
+            </div>
+            <h2><span id="receiver-username">{{ user_prof.username }}</span>'s Profile</h2>
+
+            <div class="profile-details">
+                <p>Bio: {{ profile.bio }}</p>
+                <p>Is Author: {{ is_author }}</p>
+                <p>No of Books Bought: {{ books_bought }}</p>
+                <p>Total Money Spent: ${{ total_money_spent }}</p>
+                <p>Gender: {{ gender }}</p>
+                <p>Date of Birth: {{ dob }}</p>
+            </div>
+                <p>Last Activity:  <span id="last_time">{{ last_activity}}</span></p>
+        </div>
+
+        <div id="messages-content" class="tab-pane fade">
+          <div class="message notice">
+            <p>This is the start of you messages with <b style="color:yellow;">{{user_prof.username}}</b></p>
+          </div>
+          <div class="real-messages">
+          {% for message in messages %}
+          <div class="message {% if message.sender == request.user %}sender{% else %}viewer{% endif %}" data-timestamp="{{ message.timestamp|date:"b. d, Y, H:i:s A" }}">
+            <p>{{ message.content }}</p>
+        </div>
+    {% endfor %}
+      </div>
+            <!-- Content for Messages Tab (empty for now) -->
+          <div class="right">
+            <form id="message-form">
+              <input type="text" id="message-input" placeholder="Type your message...">
+              <button type="submit">Send</button>
+          </form>
+        </div>
+        </div>
+        
+        <!-- Add more tab content divs as needed -->
+    </div>
+</div>
+{% endblock content %}

@@ -1315,7 +1315,9 @@ button#submitReport:hover {
         <h2 class="mb-3 text-center">
           <div class="user-profile" id="reviewer{{review.user.username}}">
             {% if profile_image_urls|get_item:review.user.username %}
+            <a href="/user/user_view/{{review.user.username}}">
           <img src="{{ profile_image_urls|get_item:review.user.username }}" class="dp" alt="">
+            </a>
           {% else %}
           <img src="{% static 'img/def_png.png' %}" class="dp" alt="">
           {% endif %}

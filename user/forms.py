@@ -48,12 +48,12 @@ class UserProfileChangeForm(UserChangeForm):
 class UserBioChangeForm(UserChangeForm):
 	class Meta:
 		model=User
-		fields=('first_name','last_name',)
+		fields=('first_name','last_name')
 
 class UserBioChangeForm2(UserChangeForm):
 	class Meta:
 		model=UserProfile
-		fields=('gender','dob',)
+		fields=('gender','dob','bio')
 
 class EmailChange(UserChangeForm):
 	class Meta:

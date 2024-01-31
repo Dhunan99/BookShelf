@@ -310,7 +310,6 @@ input[type="radio"] + label {
     display: inline-block;
     cursor: pointer;
 }
-
 /* Style the checked radio button label */
 input[type="radio"]:checked + label,input[type="radio"]:disabled:checked + label {
     color: #007bff; /* Set the desired text color for the checked option */
@@ -368,6 +367,10 @@ input[type="radio"]:disabled + label {
     top: 100%; /* Position below the element */
     left: 0;
     z-index: 1; /* Ensure it's above other elements */
+}
+.biodata {
+    width: 100%;
+    text-align: center;
 }
 
 </style>
@@ -447,10 +450,13 @@ input[type="radio"]:disabled + label {
                     <!-- Bio Section -->
                     <div class="tab-pane fade" id="bio">
                         <h2>Bio</h2>
-                        <form method="post" action="{% url 'save_bio' %}" id="bio-form">
+                        <form method="post" action="{% url 'save_bio' %}" id="bio-form">x
                             {% csrf_token %}
                             <!-- Bio fields here -->
                             <input type="hidden" name="form_name" value="bio">
+                            <div class="form-group">
+                                <textarea name="bio" disabled class="biodata">{{user.userprofile.bio}}</textarea>
+                            </div>
                             <div class="form-group">
                                 <label for="first-name">First Name:</label>
                                 <input type="text" id="first-name" name="first_name" class="form-control" value="{{ user.first_name }}" disabled>
