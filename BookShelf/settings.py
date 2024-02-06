@@ -62,7 +62,16 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+    },
+}
 SITE_ID = 1
 ACCOUNT_LOGOUT_ON_GET=True
 LOGOUT_REDIRECT_URL='/user/login'
@@ -74,9 +83,9 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'user.middleware.UserActivityMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'user.middleware.UserActivityMiddleware',
     # 'crispy_forms',
 ]
 RAZOR_KEY_ID = 'rzp_test_cNVyoaHhdX2eSa'
@@ -148,7 +157,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/

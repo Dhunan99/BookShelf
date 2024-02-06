@@ -34,3 +34,4 @@ class Order(models.Model):
             # Update the status to "Failed"
             self.payment_status = self.PaymentStatusChoices.FAILED
             self.save()
+        

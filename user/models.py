@@ -4,6 +4,8 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from ckeditor.fields import RichTextField
+
 # class Member(models.Model):
 #     UserName=models.CharField(max_length=26)
 #     Email=models.EmailField()
@@ -113,3 +115,17 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender} to {self.receiver}: {self.content}"
+    
+class ReadingProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey('books.Books', on_delete=models.CASCADE)
+    current_url = models.URLField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.book.Title} - {self.current_url}"
+    
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    url = models.URLField()  # Save the URL associated with the comment
+    content = RichTextField()
+    created_at = models.DateTimeField(auto_now_add=True)

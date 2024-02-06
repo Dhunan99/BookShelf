@@ -1017,7 +1017,6 @@ button#submitReport:hover {
     });
 });
 </script>
-
 <div class="container">
   <div class="row">
     <div class="col-md-12">
@@ -1117,6 +1116,11 @@ button#submitReport:hover {
       </div>{% endif %}
       <div class="d-flex justify-content-end align-items-center mt-3">
         <a href="/books/book/{{book.BookID}}" class="chap-list cusomt" style="margin-left:15px;">Description</a>
+         {% if reading_progress is not None %}
+         <a href="{{reading_progress}}" class="chap-list cusomt" style="margin-left:15px;">Continue Reading</a>
+         {% else %}
+         <a href="{{reading_progress}}" class="chap-list cusomt" style="margin-left:15px;">Continue Reading</a>
+        {% endif %}
         {% if book_in_library %}
           <form method="get" style="background-color:#1a1a1a;color:white;">
             <input type="hidden" name="chapter_list" value="True">

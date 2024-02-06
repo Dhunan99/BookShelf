@@ -113,7 +113,9 @@
     <hr>
     <!-- Checkout button -->
     <div class="right-align">
+        {% if cart_items %}
         <a href="{% url "checkout" %}" class="checkout-button btn-sm">Proceed to Checkout</a>
+        {% endif %}
     </div>
 </div>
 

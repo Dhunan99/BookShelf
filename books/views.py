@@ -9,7 +9,7 @@ from django.http import JsonResponse,HttpResponse
 from django.db.models import Q
 from django.core.paginator import Paginator,EmptyPage,PageNotAnInteger
 from django.contrib.auth.decorators import login_required
-from user.models import UserProfile,ShoppingCart,PurchaseHistory
+from user.models import UserProfile,ShoppingCart,PurchaseHistory,ReadingProgress
 from payment.models import Order
 import ebooklib
 from django.urls import reverse
@@ -384,6 +384,12 @@ def book_detail(request, book_id, form=None):
     else:
             # If the user doesn't have a cart, set item count to 0
         cart_item_count = 0
+    try:
+        reading_progress = ReadingProgress.objects.get(user=user, book=book)
+    except ReadingProgress.DoesNotExist:
+        # Handle the case where the reading progress object does not exist
+        reading_progress = None
+        
     context={
         'book': book,
         'form': form,
@@ -393,6 +399,7 @@ def book_detail(request, book_id, form=None):
         'in_cart':book_in_cart(book,request.user),
         'profile_image_urls': profile_image_urls,  
         'cart_item_count':cart_item_count,
+        'reading_progress':reading_progress.current_url if reading_progress else None
 
     }
     if trigger == "True":
@@ -910,3 +917,23 @@ def add_to_cart(request, book_id):
         shopping_cart.update_total_price()
         shopping_cart.save()
     return redirect(request.META.get('HTTP_REFERER', '/'))
+
+def update_reading_progress(request):
+    if request.method == 'POST':
+        book_id = request.POST.get('book_id')
+        current_url = request.POST.get('current_url')
+
+        user = request.user
+        book = get_object_or_404(Books, pk=book_id)
+
+        # Get or create a reading progress instance
+        reading_progress, created = ReadingProgress.objects.get_or_create(user=user, book=book)
+
+        # Update the current URL
+        reading_progress.current_url = current_url
+
+        reading_progress.save()
+
+        return JsonResponse({'success': True})
+    else:
+        return JsonResponse({'success': False})
