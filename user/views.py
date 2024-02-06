@@ -417,6 +417,10 @@ def send_message(request):
 @login_required
 def refresh_messages_view(request):
     last_timestamp = request.GET.get('last_timestamp')
+    try:
+        sender=User.objects.get(username=request.GET.get('username'))
+    except:
+        print("Unauthorised retrieval")
     if not last_timestamp:
         return JsonResponse({'error': 'Invalid last timestamp'}, status=400)
     # Convert the last_timestamp to a datetime object
@@ -425,6 +429,7 @@ def refresh_messages_view(request):
     # Retrieve new messages after last_timestamp
     new_messages = Message.objects.filter(
     receiver=request.user,
+    sender=sender,
     timestamp__gte=last_timestamp + timedelta(seconds=1)
 ).order_by('timestamp')
 

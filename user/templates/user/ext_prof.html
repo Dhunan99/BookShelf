@@ -260,7 +260,7 @@ margin-top:15px;
       $.ajax({
         type: 'GET',
         url: `{% url "refresh_messages" %}`,
-        data: { last_timestamp: isoLastTimestamp  },
+        data: { last_timestamp: isoLastTimestamp,username: '{{ user_prof.username }}' },
         dataType: 'json',
         success: function (data) {
           if (data.messages.length > 0) {
