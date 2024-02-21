@@ -1,0 +1,434 @@
+{% extends "user/home.html" %}
+{% block title %}<title>Ranking</title>{% endblock %}
+{% block content %}
+<style>
+    a{
+        color:#20c997;
+    }
+    .container {
+        padding: 2rem;
+        padding-right: 9rem;
+        padding-left: 4rem;
+    }
+      .glossy-heading{
+        box-shadow: -5px 6px 4px rgba(0, 0, 0, 0.4);
+      }
+      
+    .ranking-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+      
+    .ranking-item {
+        border-bottom: 1px solid #ededed;
+    }
+      
+    .ranking-item:first-child {
+        border-top: 1px solid #ededed;
+    }
+      
+    .ranking-card {
+        color: inherit;
+        display: flex;
+        padding: 1rem 0;
+        text-decoration: none;
+    }
+      
+    .ranking-image {
+        transition: transform 0.3s ease;
+        margin: 0 1rem 0 0;
+        position: relative;
+    }
+      
+    .ranking-thumbnail {
+        width:11rem;
+    }
+      
+    .ranking-badge {
+        align-items: center;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 9999px;
+        color: black;
+        display: flex;
+        font-size: 0.95rem;
+        height: 1.8rem;
+        justify-content: center;
+        left: -0.5rem;
+        position: absolute;
+        top: -0.5rem;
+        width: 1.5rem;
+    }
+      
+    /* 1位 */
+    .ranking-item:nth-child(1) .ranking-badge {
+        background-color: #d9b340;
+        border: 1px solid #d9b340;
+        color: #fff;
+    }
+      
+    /* 2位 */
+    .ranking-item:nth-child(2) .ranking-badge {
+        background-color: #6f7b83;
+        border: 1px solid #6f7b83;
+        color: #fff;
+    }
+      
+    /* 3位 */
+    .ranking-item:nth-child(3) .ranking-badge {
+        background-color: #a15326;
+        border: 1px solid #a15326;
+        color: #fff;
+    }
+      
+    .ranking-shop-name {
+        color: #888;
+        font-size: 0.75rem;
+    }
+      
+    .ranking-description {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin: 0.5rem 12px 6px 0px;
+        /* Allow the description to stretch */
+        flex-grow: 1;
+    }
+      
+    .ranking-card:hover .ranking-image {
+        transform: scale(1.05);
+    }
+      
+    .ranking-card:hover .ranking {
+        color:#20c997;
+        text-decoration: underline;
+    }
+    .ranking{
+        font-size: 1.5rem;
+    }
+    // Filter styling
+// --------------
+.filter-label {
+  display: block;
+  padding: 0;
+  margin-top: 0;
+  margin-bottom: 4px;
+  color: #95a5a6;
+}
+
+.filters-group {
+  padding: 1rem;
+  margin: 0 0 4px;
+  border: 0;
+}
+
+@media screen and (min-width: 768px) {
+  .filters-group-wrap {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+.btn-group:after,.btn-group:before {
+  content: " ";
+  display: table
+}
+
+.btn-group:after {
+  clear: both
+}
+
+.btn-group .btn {
+  float: left;
+  border-radius: 0
+}
+
+.btn-group .btn:first-child {
+  border-radius: 3px 0 0 3px
+}
+
+.btn-group .btn:not(:first-child) {
+  margin-left: -1px
+}
+
+.btn-group .btn:last-child {
+  border-radius: 0 3px 3px 0
+}
+
+.btn-group label.btn input[type=radio] {
+  position: absolute;
+  clip: rect(0,0,0,0);
+  pointer-events: none
+}
+
+.btn {
+  display: inline-block;
+  padding: .75em .8em;
+  text-align: center;
+  border-radius: 3px;
+  border: 1px solid #34495e;
+  color: #34495e;
+  font-size: 1rem;
+  background-color: rgba(52,73,94,0);
+  transition: .2s ease-out;
+  cursor: pointer;
+  -webkit-appearance: none
+}
+
+@media (-moz-touch-enabled:0),(pointer: fine) {
+  .btn:hover {
+    color:#fff;
+    text-decoration: none;
+    background-color: #34495e
+  }
+}
+
+.btn:focus {
+  outline-width: 0;
+  box-shadow: 0 0 0 2px rgba(52,73,94,.4)
+}
+
+.btn.active,.btn:active {
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.3);
+  color: #fff;
+  background-color: #34495e
+}
+
+.btn:focus.active {
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.3),0 0 0 2px rgba(52,73,94,.4)
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: .7;
+  color: #34495e;
+  background-color: rgba(52,73,94,0)
+}
+
+.btn--primary {
+  color: #3498db;
+  border-color: #3498db;
+  background-color: rgba(52,152,219,0)
+}
+
+@media (-moz-touch-enabled:0),(pointer: fine) {
+  .btn--primary:hover {
+    background-color:#3498db
+  }
+}
+
+.btn--primary:focus {
+  box-shadow: 0 0 0 2px rgba(52,152,219,.4)
+}
+
+.btn--primary.active,.btn--primary:active {
+  background-color: #3498db
+}
+
+.btn--primary:focus.active {
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.3),0 0 0 2px rgba(52,152,219,.4)
+}
+
+.btn--primary:disabled {
+  color: #3498db;
+  background-color: rgba(52,152,219,0)
+}
+
+@media screen and (max-width: 767px) {
+  .btn {
+    font-size:.875rem
+  }
+}
+.row{
+    flex-direction: column;
+}
+.disable-specific-styles .ranking-item:nth-child(1) .ranking-badge,
+.disable-specific-styles .ranking-item:nth-child(2) .ranking-badge,
+.disable-specific-styles .ranking-item:nth-child(3) .ranking-badge {
+    color: black;
+    background-color:white;
+}
+.enable-specific-styles .ranking-item:nth-last-child(3) .ranking-badge{
+    background-color: #a15326;
+    border: 1px solid #a15326;
+    color: #fff;
+}
+.enable-specific-styles .ranking-item:nth-last-child(2) .ranking-badge{
+    background-color: #6f7b83;
+    border: 1px solid #6f7b83;
+    color: #fff;
+}
+.enable-specific-styles .ranking-item:nth-last-child(1) .ranking-badge {
+    background-color: #d9b340;
+    border: 1px solid #d9b340;
+    color: #fff;
+}
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get all elements with the class 'ranking-description'
+        const descriptionElements = document.querySelectorAll('.ranking-description');
+    
+        // Define the maximum length for truncation
+        const maxLength = 1100;
+    
+        // Function to truncate words
+        function truncateWords(text, maxLength) {
+            if (text.length <= maxLength) {
+                return text; // No truncation needed
+            }
+    
+            const truncatedText = text.slice(0, maxLength);
+            const lastSpaceIndex = truncatedText.lastIndexOf(' ');
+    
+            if (lastSpaceIndex !== -1) {
+                return truncatedText.slice(0, lastSpaceIndex) + '...';
+            }
+    
+            return truncatedText + '...';
+        }
+    
+        // Iterate over each element and truncate its content
+        descriptionElements.forEach(function (element) {
+            const originalText = element.textContent.trim();
+            const truncatedText = truncateWords(originalText, maxLength);
+            element.textContent = truncatedText;
+        });
+    });
+    
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get all filter buttons
+        const filterButtons = document.querySelectorAll('.btn-group.filter-options .btn');
+
+        // Add click event listener to each filter button
+        filterButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                // Remove active class from all filter buttons
+                filterButtons.forEach(function (btn) {
+                    btn.classList.remove('active');
+                });
+
+                // Add active class to the clicked filter button
+                button.classList.add('active');
+            });
+        });
+
+        // Get all sort buttons
+        const sortButtons = document.querySelectorAll('.btn-group.sort-options .btn');
+
+        // Add click event listener to each sort button
+        sortButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                // Remove active class from all sort buttons
+                sortButtons.forEach(function (btn) {
+                    btn.classList.remove('active');
+                });
+
+                // Add active class to the clicked sort button
+                button.classList.add('active');
+            });
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get all filter buttons
+        const filterButtons = document.querySelectorAll('.btn-group.filter-options .btn');
+
+        // Add click event listener to each filter button
+        filterButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                button.classList.add('active');
+                const type = button.getAttribute('data-group');
+                const url = `/books/ranking/${type}`;
+                window.location.href = url;
+            });
+        });
+        sortBooks('ascc');
+    });
+    var list="";
+    var state="asc";
+    function sortBooks(order) {
+         if(order=='ascc'){
+            list = document.getElementsByClassName('ranking-list');
+            list=list[0].innerHTML;
+         }
+         else if (order=='asc'){
+            document.getElementsByClassName('ranking-list')[0].innerHTML=list;
+            state="asc";
+            const rankingList = document.querySelector('.ranking-list');
+            rankingList.classList.remove('disable-specific-styles');
+            rankingList.classList.remove('enable-specific-styles');
+         }
+         else if(order=='dsc'){
+            if (state == "asc") {
+                const items = document.getElementsByClassName('ranking-item');
+                let reversedHTML = '';
+            
+                for (let i = items.length - 1; i >= 0; i--) {
+                    reversedHTML += items[i].outerHTML;
+                }
+            
+                document.getElementsByClassName('ranking-list')[0].innerHTML = reversedHTML;
+                const rankingList = document.querySelector('.ranking-list');
+                rankingList.classList.add('disable-specific-styles');
+                rankingList.classList.add('enable-specific-styles');
+                state = "dsc";
+            }
+         }
+    }
+</script>
+<div class="container">
+    <aside class="sidebar">
+        <nav class="ranking">
+            <h2 class="ranking-title glossy-heading">All-time Ranking</h2>
+            <div class="row">
+    <div class="col-12@sm filters-group-wrap">
+    <div class="filters-group">
+        <p class="filter-label">Filter</p>
+        <div class="btn-group filter-options">
+            <button class="btn btn--primary {% if type == 'alltime' %}active{% endif %}" data-group="alltime">All-Time</button>
+            <button class="btn btn--primary {% if type == 'annual' %}active{% endif %}" data-group="annual">Annual</button>
+            <button class="btn btn--primary {% if type == 'monthly' %}active{% endif %}" data-group="monthly">Monthly</button>
+            <button class="btn btn--primary {% if type == 'weekly' %}active{% endif %}" data-group="weekly">Weekly</button>
+            <button class="btn btn--primary {% if type == 'daily' %}active{% endif %}" data-group="daily">Daily</button>
+        </div>
+    </div>
+    <div class="filters-group ml-5"> <!-- Use ml-auto to push it to the right -->
+        <fieldset>
+            <legend class="filter-label">Sort</legend>
+            <div class="btn-group sort-options">
+                <label class="btn active">
+                    <input type="radio" name="sort-value" value="asc" onclick="sortBooks('asc')" checked /> ASC
+                </label>
+                <label class="btn">
+                    <input type="radio" name="sort-value" value="dsc" onclick="sortBooks('dsc')"/> DSC
+                </label>
+            </div>
+        </fieldset>
+    </div>
+</div>
+
+</div>
+            <ul class="ranking-list">
+                {% for book in books %}
+                    <li class="ranking-item">
+                        <div class="ranking-card">
+                            <figure class="ranking-image">
+                                <img src="{{ book.cover_image.url }}" alt="{{ book.Title }} Cover" class="ranking-thumbnail" />
+                                <span class="ranking-badge">{{ forloop.counter }}</span>
+                            </figure>
+                            <div class="ranking-card-info">
+                                <div class="ranking"><a href="/books/book/{{book.BookID}}">{{ book.Title }}</a></div>
+                                <p class="ranking-description">{{ book.Description }}</p>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    </aside>
+</div>
+{% endblock content %}

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from .forms import BookForm,CategoryForm,ReviewForm,BookFilterForm
-from .models import Authors, Languages, Books,Category,Review,Like,Report
+from .models import Authors, Languages, Books,Category,Review,Like,Report,Vote
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.http import require_POST
 from django.contrib import messages
@@ -15,7 +15,13 @@ import ebooklib
 from django.urls import reverse
 from ebooklib import epub
 import json
-from datetime import datetime
+from datetime import datetime,date
+from django.core.cache import cache
+from django.http import Http404
+from django.utils import timezone
+from django.db import models
+from itertools import chain
+
 # Create your views here.
 def user_is_superuser(user):
     return user.is_superuser
@@ -268,7 +274,7 @@ def book_list(request):
 def book_in_cart(book, user):
     if user.is_authenticated:
         # Assuming your Book model has a ForeignKey to ShoppingCart named 'cart'
-        return user.shopping_carts.filter(items=book).exists() #!! related name is shopping cart !! 
+        return user.shopping_carts.filter(items=book).exists() 
     return False
 
 @login_required
@@ -389,7 +395,10 @@ def book_detail(request, book_id, form=None):
     except ReadingProgress.DoesNotExist:
         # Handle the case where the reading progress object does not exist
         reading_progress = None
-        
+    if Vote.has_user_voted_today(user):
+        voted=True
+    else:
+        voted=False
     context={
         'book': book,
         'form': form,
@@ -399,8 +408,8 @@ def book_detail(request, book_id, form=None):
         'in_cart':book_in_cart(book,request.user),
         'profile_image_urls': profile_image_urls,  
         'cart_item_count':cart_item_count,
-        'reading_progress':reading_progress.current_url if reading_progress else None
-
+        'reading_progress':reading_progress.current_url if reading_progress else None,
+        'voted': voted
     }
     if trigger == "True":
         context['chapters'] = extract_chapters_from_epub(request,book_id)
@@ -937,3 +946,74 @@ def update_reading_progress(request):
         return JsonResponse({'success': True})
     else:
         return JsonResponse({'success': False})
+    
+def vote_endpoint(request,type=None):
+    data = json.loads(request.body)
+    book_id = data.get('book_id')
+    user = request.user  
+    vote, created = Vote.objects.get_or_create(user=user, book_id=book_id, vote_date=date.today())
+
+    if created:
+        # Vote was successfully created
+        return JsonResponse({'message': 'Vote successful'})
+    else:
+        # User has already voted for the book today
+        return JsonResponse({'message': 'User has already voted for this book today'}, status=400)
+    
+@login_required
+def ranking(request, type='alltime'):
+    if type and type not in ('annual', 'weekly', 'monthly', 'daily', 'alltime'):
+        raise Http404("This page does not exist")
+    
+    cache_key = f'ranking_{type}'
+    cache_timestamp_key = f'ranking_{type}_timestamp'
+    
+    ranking_data = cache.get(cache_key)
+    cache_timestamp = cache.get(cache_timestamp_key)
+    
+    # Check if the cache timestamp is older than 1 minute
+    if cache_timestamp:
+        time_difference = timezone.now() - cache_timestamp
+        if time_difference.total_seconds() > 60:
+            ranking_data = None  # Force recalculation if cache is older than 1 minute
+    
+    if ranking_data is None:
+        today = timezone.now().date()
+
+        if type == 'alltime':
+            # Calculate all-time ranking based on all votes
+            ranking_data = Books.objects.annotate(score=models.Count('vote')).order_by('-score')
+
+        elif type == 'annual':
+            # Calculate annual ranking based on votes within the current year
+            ranking_data = Books.objects.filter(vote__vote_date__year=today.year).annotate(score=models.Count('vote')).order_by('-score')
+
+        elif type == 'monthly':
+            # Calculate monthly ranking based on votes within the current month
+            ranking_data = Books.objects.filter(vote__vote_date__year=today.year, vote__vote_date__month=today.month).annotate(score=models.Count('vote')).order_by('-score')
+
+        elif type == 'weekly':
+            # Calculate weekly ranking based on votes within the current week
+            start_of_week = today - timezone.timedelta(days=today.weekday())
+            ranking_data = Books.objects.filter(vote__vote_date__gte=start_of_week).annotate(score=models.Count('vote')).order_by('-score')
+
+        elif type == 'daily':
+            # Calculate daily ranking based on votes within the current day
+            ranking_data = Books.objects.filter(vote__vote_date=today).annotate(score=models.Count('vote')).order_by('-score')
+
+        # Store the calculated ranking in the cache
+        cache.set(cache_key, ranking_data)
+        
+        # Update the cache timestamp
+        cache.set(cache_timestamp_key, timezone.now())
+    if ranking_data.count() < 10:
+        remaining_books = Books.objects.exclude(pk__in=ranking_data.values_list('pk', flat=True))[:10 - ranking_data.count()] 
+        ranking_data = list(chain(ranking_data, remaining_books))
+    # for book in ranking_data:
+    #     print (f"{book.Title} - {book.score}")
+    print(type)
+    context = {
+        'books': ranking_data,
+        'type':type
+    }
+    return render(request, 'books/ranking.html', context)

@@ -181,3 +181,16 @@ class Report(models.Model):
 
     class Meta:
         unique_together = ('user', 'review')
+
+class Vote(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey(Books, on_delete=models.CASCADE)
+    vote_date = models.DateField(auto_now_add=True)  # Date of the vote
+
+
+    def __str__(self):
+        return f"Vote by {self.user.username} for {self.book.Title} on {self.vote_date}"
+    @classmethod
+    def has_user_voted_today(cls, user):
+        today = timezone.now().date()
+        return cls.objects.filter(user=user, vote_date=today).exists()

@@ -27,5 +27,10 @@ urlpatterns = [
     path('dismiss_report/', views.dismiss_report, name='dismiss_report'),
     path('delete_review_2/', views.delete_review_2, name='delete_review_2'),
     path('update_reading_progress/', views.update_reading_progress, name='update_reading_progress'),
+    path('vote/', views.vote_endpoint, name='vote_endpoint'),
+    path('ranking/<str:type>/', views.ranking, name='ranking'),
+    path('ranking/', views.ranking, name='ranking'),
+
+
 
 ]

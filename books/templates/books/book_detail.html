@@ -1016,6 +1016,29 @@ button#submitReport:hover {
       });
     });
 });
+function voteForBook(bookId) {
+  fetch('/books/vote/', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({
+          book_id: bookId,
+      }),
+  })
+  .then(response => response.json())
+  .then(data => {
+      // Handle the response as needed
+      if (data.message === 'Vote successful') {
+        location.reload();
+    }
+  })
+  .catch(error => {
+      console.error('Error:', error);
+  });
+}
+</script>
 </script>
 <div class="container">
   <div class="row">
@@ -1126,6 +1149,15 @@ button#submitReport:hover {
             <input type="hidden" name="chapter_list" value="True">
             <button type="submit" class="chap-list">Chapter List</button>
         </form>
+        {% if voted %}
+          <button class="btn btn-secondary" style="margin-left:15px;" disabled>
+           Voted today
+        </button>
+          {% else %}
+          <button class="btn btn-info" style="margin-left:15px;" onclick="voteForBook('{{ book.BookID }}')">
+            Vote
+        </button>
+          {% endif %}
         {% elif in_cart %}
         <form method="get" style="background-color:#1a1a1a;color:white;">
           <input type="hidden" name="preview" value="True">
