@@ -107,14 +107,31 @@ class UserActivity(models.Model):
     last_activity = models.DateTimeField(auto_now=True)
     def __str__(self):
         return f'{self.user} was last active at {self.last_activity}'
+    
 class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
     content = models.TextField()
+    read_status=models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.sender} to {self.receiver}: {self.content}"
+    
+    def create_notification(self):
+        if not Notification.objects.filter(
+            recipient=self.receiver,
+            sender=self.sender,
+            notification_type=NotificationType.MESSAGE,
+            is_read=False,
+        ).exists():
+            # Create a new notification
+            Notification.objects.create(
+                sender=self.sender,
+                recipient=self.receiver,
+                notification_type=NotificationType.MESSAGE,
+                content_type=ContentType.objects.get_for_model(self),
+                object_id=self.id)
     
 class ReadingProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

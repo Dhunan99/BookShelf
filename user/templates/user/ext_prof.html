@@ -275,14 +275,29 @@ margin-top:15px;
         },
       });
     }
-    setInterval(refreshMessages, 4000);
-      
-
-
-    // Attach the load event to the container
+    function clear(){
+      $.ajax({
+        url: '/user/clear_message_notification',
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        data: { username: '{{ user_prof.username }}' },
+        async: true,  // Set async to false for synchronous request
+        success: function (response) {
+            // Handle the response if needed
+            console.log('AJAX request successful');
+        },
+        error: function (error) {
+            // Handle errors if any
+            console.error('AJAX request failed', error);
+        }
+    });
+    }
+    setInterval(refreshMessages, 6000);
+  window.addEventListener('beforeunload', (event) => {
+    clear();
+  });
   });
 </script>
-
 <div id="user-profile-container">
     <ul id="user-profile-tabs" class="nav nav-tabs justify-content-center">
         <li class="nav-item">

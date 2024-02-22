@@ -946,6 +946,12 @@ button#submitReport:hover {
             }
         });
     });
+    function begin(){
+      var firstLink = document.querySelector('.list-group li:first-child a');
+if (firstLink) {
+     window.location.href = firstLink.getAttribute('href');
+} 
+    }
 </script>
 
 <script>
@@ -1142,7 +1148,10 @@ function voteForBook(bookId) {
          {% if reading_progress is not None %}
          <a href="{{reading_progress}}" class="chap-list cusomt" style="margin-left:15px;">Continue Reading</a>
          {% else %}
-         <a href="{{reading_progress}}" class="chap-list cusomt" style="margin-left:15px;">Continue Reading</a>
+         {% if toggle %}
+         <a class="chap-list cusomt" style="margin-left:15px;" onclick="begin()" id="starter">Start Reading</a>
+         {% else %}
+         {% endif %}
         {% endif %}
         {% if book_in_library %}
           <form method="get" style="background-color:#1a1a1a;color:white;">

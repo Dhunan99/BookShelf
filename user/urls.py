@@ -26,5 +26,5 @@ urlpatterns = [
     path('user_view/<str:username>',views.user_view, name="user_view"),
     path('send_message/', views.send_message, name='send_message'),
     path('refresh_messages/', views.refresh_messages_view, name='refresh_messages'),
-
+    path('clear_message_notification',views.clear_message_notification,name='clear_message_notification')
 ]

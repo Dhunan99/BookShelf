@@ -10,13 +10,13 @@ from django.contrib.auth.views import PasswordResetView,PasswordResetDoneView,Pa
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib.auth.models import User
-from .models import OTPModel,ShoppingCart,PurchaseHistory,Notification,UserActivity,UserProfile
+from .models import OTPModel,ShoppingCart,PurchaseHistory,Notification,UserActivity,UserProfile,NotificationType
 from pyotp import TOTP
 from django.http import JsonResponse
 import secrets
 from django.core.mail import send_mail
 from django.contrib.auth.views import PasswordChangeView
-from books.models import Books
+from books.models import Books,Review
 from django.views.decorators.csrf import csrf_exempt
 from django.template.loader import render_to_string
 from django.http import HttpResponse
@@ -33,7 +33,7 @@ from django.db import models
 import json
 from django.db.models import Q
 from datetime import timedelta
-
+from django.core.cache import cache
 
   # Import User model
 # from django.contrib import messages
@@ -194,8 +194,16 @@ def validate_username(request):
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @login_required
 def home(request):
-     # Fetch book data from the Books model
-    books = Books.objects.filter(tags__name='Popular')  # You can also filter or order the data as needed
+    if not cache.get('last_comprehensive_score_update'):
+        Books.assign_tags()
+        cache.set('last_comprehensive_score_update', True, 1)
+    for book in Books.objects.all():
+            # Loop through all reviews for the current book
+            for review in Review.objects.filter(book=book):
+                # Combine the review text with overall rating for sentiment analysis
+                review.calculate_sentiment_score()
+    # Fetch book data from the Books model
+    books = Books.objects.filter(tags__name='Popular')
     user_cart = ShoppingCart.objects.filter(user=request.user).first()
     if user_cart:
         cart_item_count = user_cart.items.count()
@@ -385,6 +393,12 @@ def user_view(request,username):
             messages = Message.objects.filter(
                 Q(sender=request.user, receiver=user) | Q(sender=user, receiver=request.user)
             ).order_by('timestamp')
+            for message in reversed(messages):
+                if message.receiver == request.user:
+                    message.read_status = True
+                    message.save()
+                else:
+                    break
             context = {
                 'user_prof': user,
                 'profile': profile,
@@ -406,10 +420,8 @@ def send_message(request):
         data = json.loads(request.body.decode('utf-8'))
         receiver_username = data.get('receiver')
         content = data.get('content')
-
-        # Create and save the message
         message = Message.objects.create(sender=request.user, receiver=User.objects.get(username=receiver_username), content=content)
-
+        message.create_notification()
         return JsonResponse({'success': True})
     else:
         return JsonResponse({'success': False, 'error': 'Invalid request method'})
@@ -432,7 +444,9 @@ def refresh_messages_view(request):
     sender=sender,
     timestamp__gte=last_timestamp + timedelta(seconds=1)
 ).order_by('timestamp')
-
+    for message in new_messages:
+        message.read_status = True
+        message.save()
     # Serialize the new messages
     serialized_messages = []
     for message in new_messages:
@@ -445,7 +459,20 @@ def refresh_messages_view(request):
 
     return JsonResponse({'messages': serialized_messages})
 
-
+def clear_message_notification(request):
+    if request.POST:
+        usr=User.objects.get(username=request.POST.get('username'))
+        notification_to_delete = Notification.objects.filter(
+        recipient=request.user,
+        sender=usr,
+        notification_type=NotificationType.MESSAGE,
+        is_read=False,
+    ).first()  # Use first() to get the first matching notification or None
+        if notification_to_delete:
+            notification_to_delete.is_read=True
+            notification_to_delete.save()
+        return HttpResponse('ok')
+        
 
 # def register(request):
     # if request.method == 'POST':

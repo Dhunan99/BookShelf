@@ -6,6 +6,11 @@ from django.utils import timezone
 import os
 from user.models import NotificationType,Notification
 from django.contrib.contenttypes.models import ContentType
+import nltk
+nltk.download('vader_lexicon')
+from nltk.sentiment import SentimentIntensityAnalyzer
+from django.db.models import Avg, F,Value,FloatField,Q
+from django.db.models.functions import Coalesce
 class SocialMediaLink(models.Model):
     PLATFORM_CHOICES = (
         ('twitter', 'Twitter'),
@@ -109,6 +114,26 @@ class Books(models.Model):
             self.rating = None
             self.rating_count = 0
         self.save()
+    @classmethod
+    def assign_tags(cls):
+        # Calculate comprehensive score and order by it
+        annotated_books = cls.objects.annotate(
+            comprehensive_score=Coalesce(
+                Avg(F('rating')) * 0.3 +
+                Avg(F('rating_count')) * 0.1 +
+                Avg(F('review__sentiment_score')) * 0.6,
+                Value(0.0, output_field=FloatField())
+            )
+        ).order_by('-comprehensive_score')
+
+        # Get the 'popular' tag
+        popular_tag, created = Tag.objects.get_or_create(name='Popular')
+        for book in cls.objects.filter(tags=popular_tag):
+            book.tags.remove(popular_tag)
+        # Assign the 'popular' tag to the top 3 books
+        top_books = annotated_books[:3]
+        for book in top_books:
+            book.tags.add(popular_tag)
 
 class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -122,6 +147,7 @@ class Review(models.Model):
     overall_rating = models.FloatField(null=False, blank=True)
     reviewed_at = models.DateTimeField(auto_now_add=True)
     likes_count = models.PositiveIntegerField(default=0)
+    sentiment_score = models.FloatField(null=True)
     class Meta:
         # Add a unique constraint to ensure one review per user per book
         unique_together = ('user', 'book')
@@ -138,6 +164,13 @@ class Review(models.Model):
         # Delete the review instance
         super(Review, self).delete(*args, **kwargs)
         self.book.calculate_average_rating()
+        
+    def calculate_sentiment_score(self):
+        sia = SentimentIntensityAnalyzer()
+        combined_text = f"{self.review} Overall Rating: {self.overall_rating}"
+        sentiment_score = sia.polarity_scores(combined_text)['compound']
+        self.sentiment_score = sentiment_score
+        self.save()
 
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

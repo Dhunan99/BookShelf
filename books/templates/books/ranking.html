@@ -383,7 +383,17 @@
 <div class="container">
     <aside class="sidebar">
         <nav class="ranking">
-            <h2 class="ranking-title glossy-heading">All-time Ranking</h2>
+            <h2 class="ranking-title glossy-heading">{% if type == 'alltime' %}
+                All-time Ranking
+            {% elif type == 'annual' %}
+            Annual Ranking
+            {% elif type == 'monthly' %}
+            Monthly Ranking
+            {% elif type == 'weekly' %}
+            Weekly Ranking
+            {% elif type == 'daily' %}
+            Daily Ranking
+            {% endif %} </h2>
             <div class="row">
     <div class="col-12@sm filters-group-wrap">
     <div class="filters-group">

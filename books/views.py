@@ -362,6 +362,7 @@ def extract_chapters_from_epub(request, book_id, limit=None):
 def book_detail(request, book_id, form=None):
     trigger=request.GET.get('chapter_list',None)
     trigger2=request.GET.get('preview')
+    toggle=True if trigger is not None or trigger2 is not None else None
     book = get_object_or_404(Books, pk=book_id)
     user = request.user
     user_library, created = UserLibrary.objects.get_or_create(user=user)
@@ -399,6 +400,7 @@ def book_detail(request, book_id, form=None):
         voted=True
     else:
         voted=False
+    print(toggle)
     context={
         'book': book,
         'form': form,
@@ -409,7 +411,8 @@ def book_detail(request, book_id, form=None):
         'profile_image_urls': profile_image_urls,  
         'cart_item_count':cart_item_count,
         'reading_progress':reading_progress.current_url if reading_progress else None,
-        'voted': voted
+        'voted': voted,
+        'toggle':toggle
     }
     if trigger == "True":
         context['chapters'] = extract_chapters_from_epub(request,book_id)
@@ -510,6 +513,7 @@ def add_review(request, book_id):
                     existing_review.title = review.title
                     existing_review.review = review.review
                     existing_review.style_rating, existing_review.story_rating, existing_review.grammar_rating, existing_review.character_rating,existing_review.overall_rating = map(float, request.POST.get('Rating').split())
+                    existing_review.calculate_sentiment_score()
                     existing_review.save()
                     context = {'message': 'Review updated successfully'}
                 else:
@@ -522,6 +526,7 @@ def add_review(request, book_id):
                     review.grammar_rating = grammar_rating
                     review.character_rating = character_rating
                     review.overall_rating = overall_rating
+                    review.calculate_sentiment_score()
                     review.save()
                     context = {'message': 'Review submitted successfully'}
                 book.calculate_average_rating()
@@ -1011,7 +1016,6 @@ def ranking(request, type='alltime'):
         ranking_data = list(chain(ranking_data, remaining_books))
     # for book in ranking_data:
     #     print (f"{book.Title} - {book.score}")
-    print(type)
     context = {
         'books': ranking_data,
         'type':type
