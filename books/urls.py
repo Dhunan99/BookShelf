@@ -8,6 +8,7 @@ urlpatterns = [
     path('book_list/<str:category>/', views.book_list_by_category, name='book_list_by_category'),
     path('search/', views.search_books, name='search_books'),
     path('book/<int:book_id>/', views.book_detail, name='book_detail'),
+    path('book/<int:book_id>/<int:chapter_num>', views.original_chap, name='original_chap'),
     path('add_review/<int:book_id>/', views.add_review, name='add_review'),
     path('like/', views.toggle_like_review, name='toggle_like_review'),
     path('delete_review/<int:review_id>/', views.delete_review, name='delete_review'),

@@ -852,11 +852,11 @@
 
         <div class="contents" id="translate-content">{{ chapter_content|safe }}</div>
         
-        <div class="navigation-buttons">
+        <div class="navigation-buttons notranslate">
             <a href="{{ prev_chapter }}" class="prev-button">Previous</a>
             <a href="{{ next_chapter }}" class="next-button">Next</a>
         </div>
-        <div class="comments-section">
+        <div class="comments-section notranslate">
             <h2>Comments</h2>
             {% for comment in comments %}
                 <div class="comment">

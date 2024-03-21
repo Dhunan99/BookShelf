@@ -417,11 +417,33 @@ def book_detail(request, book_id, form=None):
         'toggle':toggle
     }
     if trigger == "True":
-        context['chapters'] = extract_chapters_from_epub(request,book_id)
+        if book.isOriginal==True:
+            chapters = Chapter.objects.filter(book=book)
+            chapter_list = []
+            for chapter in chapters:
+                chapter_data = {
+                    'url': chapter.chapter_number,
+                    'title': f"Ch. {chapter.chapter_number}. "+chapter.chapter_title
+                }
+                chapter_list.append(chapter_data)
+            context['chapters'] = chapter_list
+        else:
+            context['chapters'] = extract_chapters_from_epub(request,book_id)
     elif trigger2=="True":
-        context['chapters'] = extract_chapters_from_epub(request,book_id,limit=8)
-        context['preview']=True
-
+        if book.isOriginal==True:
+            chapters = Chapter.objects.filter(book=book)
+            chapter_list = []
+            for chapter in chapters:
+                chapter_data = {
+                    'url': chapter.chapter_number,
+                    'title': f"Ch. {chapter.chapter_number} - "+chapter.chapter_title
+                }
+                chapter_list.append(chapter_data)
+            context['chapters'] = chapter_list[:8]
+            context['preview']=True
+        else:
+            context['chapters'] = extract_chapters_from_epub(request,book_id,limit=8)
+            context['preview']=True
     return render(request, 'books/book_detail.html', context)
 
 @user_passes_test(user_is_superuser)
@@ -1151,6 +1173,7 @@ def new_book(request):
             LanguageID_id=language_id,
             cover_image=cover_image,
             Author=author,
+            isOriginal=True,
             PublicationYear=datetime.now().year
         )
         # Add categories to the book
@@ -1239,3 +1262,36 @@ def fetch_chapter(request, book_id, chapter_number):
         return JsonResponse(data)
     except Chapter.DoesNotExist:
         return JsonResponse({'error': 'Chapter not found'}, status=404)
+    
+def original_chap(request,book_id,chapter_num):
+    
+    lib=UserLibrary.objects.filter(user=request.user).first()
+    book = get_object_or_404(Books, BookID=book_id)
+    if book not in lib.books.all() and chapter_num>8:
+        raise Http404
+    user_cart = ShoppingCart.objects.filter(user=request.user).first()
+    if user_cart:
+        cart_item_count = user_cart.items.count()
+    else:
+        cart_item_count = 0
+    if book.isOriginal:
+        chapter=Chapter.objects.get(book=book,chapter_number=chapter_num)
+        prev_chapter_url = None
+        next_chapter_url = None
+        if chapter_num > 1:
+            prev_chapter_url = reverse('original_chap', args=[book_id, chapter_num - 1])
+
+        total_chapters = Chapter.objects.filter(book=book).count()
+        if chapter_num < total_chapters:
+            next_chapter_url = reverse('original_chap', args=[book_id, chapter_num + 1])
+    else:
+        raise Http404
+    context = {
+                    'chapter_content': chapter.chapter_contents,
+                    'book':book,
+                    'cart_item_count':cart_item_count,
+                    'prev_chapter':prev_chapter_url,
+                    'next_chapter':next_chapter_url
+
+                }
+    return render(request,'books/read.html',context)

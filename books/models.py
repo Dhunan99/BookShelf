@@ -106,6 +106,7 @@ class Books(models.Model):
     identifier_type = models.CharField(max_length=4, choices=IDENTIFIER_CHOICES, blank=True, null=True)
     identifier_value = models.CharField(max_length=20, blank=True, null=True) 
     epub_file = models.FileField(upload_to='book/epubs/', blank=True, null=True)
+    isOriginal = models.BooleanField(default=False)
     rating = models.FloatField(null=True, blank=True)
     rating_count = models.PositiveIntegerField(default=0)
     class Meta:
