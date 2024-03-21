@@ -1,0 +1,542 @@
+{% extends 'user/home.html' %}
+{% block title %}<title>Dashboard</title>{% endblock %}
+{% load static %}   
+{% load custom_filters %}
+{% block style %}
+
+<style>
+    .ck{
+        color:black;
+    }
+    .custom-container {
+        min-height: 350px; /* Adjust the minimum width as needed */
+    }
+    /* Dark Theme Styles */
+.dark-theme {
+    background-color: #333; /* Dark background color */
+    color: #fff; /* Light text color */
+    border: 1px solid #555; /* Border style */
+    border-radius: 5px; /* Rounded corners for the container */
+}
+
+/* Active tab link style */
+.list-group-item.active {
+    background-color: #555; /* Active tab background color */
+}
+
+/* Inactive tab link style */
+.list-group-item {
+    background-color: #333; /* Inactive tab background color */
+    color: #fff; /* Text color for inactive tabs */
+}
+
+/* Additional CSS for Tab Content */
+.tab-content.dark-theme {
+    padding: 20px;
+}
+
+/* Style for headings in tab content */
+.tab-content h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #e45eff; /* Custom heading color */
+    text-align: center; /* Center-align the headings */
+}
+
+.tab-content p {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+input[type="radio"] + label {
+    display: inline-block;
+    cursor: pointer;
+}
+
+.form-group {
+    max-width: 400px; /* Adjust the maximum width as needed */
+    margin: 0 auto; /* Center the form horizontally */
+}
+
+/* Style for form labels */
+.form-group label {
+    font-weight: bold; /* Make labels bold */
+}
+
+.author-options {
+    text-align: center;
+    margin-top: 50px; /* Adjust as needed */
+    padding-bottom:10px
+}
+
+.author-options h3 {
+    font-size: 24px;
+    margin-bottom: 20px; /* Adjust spacing as needed */
+}
+
+.author-options a {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: 2px solid #007bff; /* Border color */
+    border-radius: 5px;
+    background-color: #007bff; /* Background color */
+    color: #fff; /* Text color */
+    text-decoration: none;
+    font-size: 18px;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s; /* Smooth transition */
+}
+
+.author-options a:hover {
+    background-color: #0056b3; /* Darker background color on hover */
+    border-color: #0056b3; /* Darker border color on hover */
+}
+
+.author-options a.yes {
+    background-color: #28a745; /* Custom background color for "Yes" option */
+    border-color: #28a745; /* Custom border color for "Yes" option */
+}
+
+.author-options a.yes:hover {
+    background-color: #218838; /* Darker background color on hover for "Yes" option */
+    border-color: #218838; /* Darker border color on hover for "Yes" option */
+}
+
+.author-options a.no {
+    background-color: #dc3545; /* Custom background color for "No" option */
+    border-color: #dc3545; /* Custom border color for "No" option */
+}
+
+.author-options a.no:hover {
+    background-color: #c82333; /* Darker background color on hover for "No" option */
+    border-color: #c82333; /* Darker border color on hover for "No" option */
+}
+.ck-editor__editable {
+        height: 300px; /* Set the CKEditor height */
+    }
+.ck ck-powered-by__label {
+        display: none;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to add a new social media link input field
+        function addSocialLink() {
+            var container = document.getElementById('social-links-container');
+            var inputGroup = document.createElement('div');
+            inputGroup.classList.add('input-group', 'mb-2');
+    
+            // Create input field
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'social_media_links';
+            input.classList.add('form-control');
+            input.placeholder = 'Enter social media link';
+    
+            // Create delete button
+            var deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.classList.add('btn', 'btn-sm', 'btn-danger', 'delete-link');
+            deleteButton.textContent = '-';
+    
+            // Event listener to remove the input field and delete button when clicked
+            deleteButton.addEventListener('click', function() {
+                container.removeChild(inputGroup);
+            });
+    
+            // Append input field and delete button to input group
+            inputGroup.appendChild(input);
+            inputGroup.appendChild(deleteButton);
+    
+            // Append input group to container
+            container.appendChild(inputGroup);
+        }
+    
+        // Event listener for the "+" button
+        document.getElementById('add-social-link').addEventListener('click', addSocialLink);
+    
+        // Event listener for dynamically added delete buttons
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('delete-link')) {
+                var inputGroup = event.target.closest('.input-group');
+                inputGroup.parentNode.removeChild(inputGroup);
+            }
+        });
+    });
+    
+</script>
+
+<script>
+    function enableEdit(bookID) {
+        // Enable image upload input for editing
+        document.getElementById(`cover_image_${bookID}`).disabled = false;
+
+        document.getElementById(`title_${bookID}`).disabled = false;
+        document.getElementById(`price_${bookID}`).disabled = false;
+        document.getElementById(`description_${bookID}`).disabled = false;
+        document.getElementById(`sub_${bookID}`).disabled = false;
+
+        // Show save button and hide edit button
+        document.querySelector(`#editForm_${bookID} .edit-button`).style.display = 'none';
+        document.querySelector(`#editForm_${bookID} .save-button`).style.display = 'block';
+    }
+
+    function cancelChanges(bookID) {
+        document.getElementById(`price_${bookID}`).disabled = true;
+
+        // Disable image upload input after saving changes
+        document.getElementById(`cover_image_${bookID}`).disabled = true;
+
+        // Enable title and description fields
+        document.getElementById(`title_${bookID}`).disabled = true;
+        document.getElementById(`description_${bookID}`).disabled = true;
+        document.getElementById(`sub_${bookID}`).disabled = true;
+
+        // Hide save button and show edit button
+        document.querySelector(`#editForm_${bookID} .save-button`).style.display = 'none';
+        document.querySelector(`#editForm_${bookID} .edit-button`).style.display = 'block';
+
+        // You can add logic here to send updated data to the server via AJAX or form submission
+    }
+    function checkPrice(input) {
+        if (input.value < 1) {
+            input.value = 1;
+        }
+    }
+    
+</script>
+<script>
+    function editChapters(bookID) {
+        // Hide the current form
+        document.getElementById(`editForm_${bookID}`).style.display = 'none';
+        
+        // Show the div for editing chapters
+        document.getElementById(`chaptersDiv_${bookID}`).style.display = 'block';
+        
+        // Add your logic to populate and edit chapters in the chaptersDiv
+    }
+</script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
+
+<!-- Your JavaScript code for CKEditor initialization -->
+<script>
+    const ckEditors = {};
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Function to initialize CKEditor on all textareas
+    function initCKEditorForAll() {
+    var ckTransformTextareas = document.querySelectorAll('textarea.ck-transform');
+    ckTransformTextareas.forEach(function(textarea) {
+        ClassicEditor
+            .create(textarea)
+            .then(editor => {
+                const textareaId = textarea.id;
+                ckEditors[textareaId] = editor;
+            })
+            .catch(error => {
+                console.error('Error initializing CKEditor:', error);
+            });
+    });
+}
+
+
+    // Initialize CKEditor on page load
+    initCKEditorForAll();
+});
+
+    function updateChapter(button) {
+    // Get the parent div of the clicked button
+    const parentDiv = button.closest('div');
+
+    // Remove 'btn-primary' class from all buttons within the same div and add 'btn-secondary'
+    const buttons = parentDiv.querySelectorAll('.chapter-button');
+    buttons.forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+    });
+
+    // Add 'btn-primary' class to the clicked button
+    button.classList.remove('btn-secondary');
+    button.classList.add('btn-primary');
+
+    // Set the value of the hidden input to the clicked button's value
+    const chapterNumber = button.textContent.trim();
+    const bookID = parentDiv.id.split('_')[1]; // Extract book ID from parentDiv ID
+    document.querySelector(`#chapter_${bookID}`).value = chapterNumber;
+}
+
+
+</script>
+<script>
+    // Event listener for changes in the hidden input field
+document.addEventListener('DOMContentLoaded', function () {
+    const chapterInputFields = document.querySelectorAll('.chapter');
+    chapterInputFields.forEach(inputField => {
+        inputField.addEventListener('change', function () {
+            const bookID = this.id.split('_')[1]; // Extract book ID from the input field ID
+            const chapterNumber = this.value;
+            fetchChapter(bookID, chapterNumber);
+        });
+    });
+});
+
+// Function to fetch chapter title and content via AJAX
+function updateChapter(button) {
+        // Get the parent div of the clicked button
+        const parentDiv = button.closest('div');
+
+        // Remove 'btn-primary' class from all buttons within the same div and add 'btn-secondary'
+        const buttons = parentDiv.querySelectorAll('.chapter-button');
+        buttons.forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-secondary');
+        });
+
+        // Add 'btn-primary' class to the clicked button
+        button.classList.remove('btn-secondary');
+        button.classList.add('btn-primary');
+
+        // Set the value of the hidden input to the clicked button's value
+        const chapterNumber = button.textContent.trim();
+        const bookID = parentDiv.id.split('_')[1]; // Extract book ID from parentDiv ID
+        hid=document.querySelector(`#chapter_${bookID}`)
+        hid.value = chapterNumber;
+        hid.dispatchEvent(new Event('change'));
+    }
+
+    // Event listener for changes in the hidden input field
+    document.addEventListener('DOMContentLoaded', function () {
+        const chapterInputFields = document.querySelectorAll('.chapter');
+        chapterInputFields.forEach(inputField => {
+            inputField.addEventListener('change', function () {
+                const bookID = this.id.split('_')[1]; // Extract book ID from the input field ID
+                const chapterNumber = this.value;
+                fetchChapter(bookID, chapterNumber);
+            });
+        });
+    });
+
+    // Function to fetch chapter title and content via AJAX
+    function fetchChapter(bookID, chapterNumber) {
+    const url = `/books/fetch_chapter/${bookID}/${chapterNumber}/`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            // Update title and content fields with fetched data
+            const titleInput = document.querySelector(`#titles_${bookID}`);
+            titleInput.value = data.title ? data.title : '';
+            document.querySelector(`#text_${bookID}`).innerHTML = `<textarea id="editor_${bookID}" name="editor" style="width: 100%; height: calc(100% - 40px);"></textarea>`;
+            ClassicEditor
+                    .create(document.querySelector(`#editor_${bookID}`))
+                    .then(editor => {
+                        editor.setData(data.content);
+                        // Update ckEditors object with new instance
+                        ckEditors[bookID] = editor;
+                    })
+                    .catch(error => {
+                        console.error('Error initializing CKEditor:', error);
+                    });
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+
+</script>
+
+
+
+
+{% endblock style %}
+
+{% block content %}
+<div class="container">
+    <div class="breadcrumb">
+        <a href="/">Home</a> /
+        <a href="">Write</a>
+      </div>
+<div class="custom-container">
+    <div class="container mt-5 mb-4 dark-theme">
+        {% if false %}
+        <div class="author-options">
+            <h3>Do you wish to become an Author and write Books?</h3>
+            <a href="{% url 'writer_yes' %}" class="option yes">Yes</a>
+            <a href="{% url 'writer_no' %}" class="option no">No</a>
+        </div>
+        
+        
+        {% else %}
+        <div class="row">
+            <div class="col-md-3">
+                <!-- Sidebar for section selection -->
+                <div class="list-group">
+                    <a href="#about" class="list-group-item list-group-item-action active" data-toggle="tab">Socials</a>
+                    {% for book in books %}
+    <a href="#book_{{ book.BookID }}" class="list-group-item list-group-item-action" data-toggle="tab">{{ book.Title }}</a>                   
+{% endfor %}
+
+                <a href="#create-new" class="list-group-item list-group-item-action" data-toggle="tab">Add a Book</a>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <!-- Tab content -->
+                <div class="tab-content dark-theme">
+                    <div class="tab-pane show active" id="about">
+                        <h2>Socials</h2>
+                        <form method="post" action="{% url 'set_socials' %}" id="create-new-form" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <!-- Social Media Links -->
+                           <!-- Social Media Links -->
+<div class="form-group mb-4">
+    <label for="social_media_links">Social Media Links (Twitter / Facebook / Instagram):</label><br>
+    <div id="social-links-container">
+        <!-- Initial social media link input fields -->
+        {% for link in social_media_links %}
+    <div class="input-group mb-2">
+        <input type="text" name="social_media_links" class="form-control" value="{{ link.link }}">
+        <button type="button" class="btn btn-sm btn-danger delete-link">-</button>
+    </div>
+{% endfor %}
+
+    </div>
+    <!-- Button to add new social media link -->
+    <button type="button" id="add-social-link" class="btn btn-primary mt-2">+</button>
+</div>
+
+                            
+                            <!-- Submit button -->
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </form>
+                    </div>
+                    {% for book in books %}
+    <div class="tab-pane" id="book_{{ book.BookID }}">
+        <!-- Tab content for each book -->
+        <h2>{{ book.Title }}</h2>
+        <!-- Form for editing book details -->
+        <form id="editForm_{{ book.BookID }}" action="{% url 'update_book' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="book_id" value="{{ book.BookID }}">
+            <!-- Image -->
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="d-block">
+                    <img src="{{ book.cover_image.url }}" alt="Cover Image" class="img-fluid border-secondary image" width="150px" height="150px">
+                </div>
+            </div>
+            <div class="d-flex justify-content-center align-items-center">
+                <!-- Input field for new cover image -->
+                <div class="d-block" style="margin-top:5px;">
+                    <input type="file" id="cover_image_{{ book.BookID }}" name="cover_image" class="form-control-file" accept="image/*" disabled>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" id="title_{{ book.BookID }}" name="title" class="form-control" value="{{ book.Title }}" disabled>
+            </div>
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description_{{ book.BookID }}" name="description" class="form-control" rows="5" disabled>{{ book.Description }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="price">Price:</label>
+                <input type="number" id="price_{{ book.BookID }}" name="price" class="form-control" value="{{ book.Price }}" disabled>
+            </div>
+            
+            <!-- Edit and save buttons -->
+            <button type="button" class="btn btn-primary edit-button" onclick="enableEdit('{{ book.BookID }}')">Edit</button>
+            <button type="button" class="btn btn-success save-button" onclick="cancelChanges('{{ book.BookID }}')" style="display: none;">Cancel</button>
+            <button type="submit" style="margin-top:2px;" class="btn btn-success save-button" id="sub_{{book.BookID}}" class="form-control" disabled>Submit</button>
+            <button type="button" class="btn btn-secondary edit-chapters-button" style="margin-top:4px; float: right;" onclick="editChapters('{{ book.BookID }}')">Edit Chapters</button>
+
+        </form>
+
+        <div id="chaptersDiv_{{ book.BookID }}" style="display: none; height: 500px;">
+            <form method="post" class="upload-chap-form" action="{% url 'chap_upload' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="book_id" class="book-id" value="{{ book.BookID }}">
+    
+        <div id="chapterButtons_{{ book.BookID }}" style="margin-bottom: 10px;">
+            <!-- Loop through chapters and create buttons -->
+            {% for chapter_num in book_chapters|get_item:book.BookID %}
+                <button type="button" id="chapterButton_{{ book.BookID }}_{{ chapter_num.chapter_number }}" class="btn btn-secondary chapter-button" onclick="updateChapter(this)">{{ chapter_num.chapter_number }}</button>
+            {% endfor %}
+            <!-- Create button for the next chapter -->
+            <button type="button" id="chapterButton_{{ book.BookID }}_{{ book_chapters|get_item:book.BookID|length }}" class="btn btn-primary chapter-button active" onclick="updateChapter(this)">{{ book_chapters|get_item:book.BookID|length|add:1|default:1 }}</button>
+            <input type="hidden" id="chapter_{{ book.BookID }}" name="chapter_number" class="form-control chapter" value="{{ chapters|length|default:1 }}">
+        </div>
+        
+        <div style="margin-bottom:10px;">
+            <label for="title_{{ book.BookID }}" class="col-sm-2 col-form-label">Title</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control title" id="titles_{{ book.BookID }}" name="title" value="">
+            </div>
+        </div>
+        
+        <div style="color:black;margin-bottom:5px;" id="text_{{ book.BookID }}">
+            <textarea id="editor_{{ book.BookID }}" name="editor" style="width: 100%; height: calc(100% - 40px);" class="ck-transform"></textarea>
+        </div>  
+        <input type="submit" class="btn btn-primary" value="Save">
+    </form> 
+        </div>
+        
+
+    </div>
+{% endfor %}
+    
+
+                    <!-- User Information Section -->
+                    <div class="tab-pane show show" id="create-new">
+                        <h2>Enter Details of the Book</h2>   
+                        <form method="post" action="{% url 'new_book'  %}" id="create-new-form" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <!-- User information fields here -->
+                            <div class="form-group mb-4">
+                                <label for="title">Title:</label>
+                                <input type="text" name="title" id="title" class="form-control" placeholder="Enter book title" required>
+                            </div>
+                        
+                            <!-- Categories (assuming it's a multiple select dropdown) -->
+                            <div class="form-group mb-4">
+                                <label>Categories:</label><br>
+                                {% for category in categories %}
+                                <div class="form-check form-check-inline">
+                                    <input type="checkbox" name="categories" id="category{{ category.id }}" value="{{ category.id }}" class="form-check-input">
+                                    <label for="category{{ category.id }}" class="form-check-label">{{ category.name }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                        
+                            <!-- Description -->
+                            <div class="form-group mb-4">
+                                <label for="description">Description:</label>
+                                <textarea name="description" id="description" class="form-control" rows="5" placeholder="Enter book description" required></textarea>
+                            </div>
+                        
+                            <!-- Language -->
+                            <div class="form-group mb-4">
+                                <label for="language">Language:</label>
+                                <select name="language" style="margin-bottom:4px;" id="language" class="form-control" required>
+                                    {% for language in languages %}
+                                    <option value="{{ language.LanguageID }}">{{ language.LanguageName }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        
+                            <!-- Cover Image -->
+                            <div class="form-group mb-4">
+                                <label for="cover_image">Cover Image (Optional):</label>
+                                <input type="file" name="cover_image" id="cover_image" class="form-control-file" accept="image/*" >
+                            </div>
+                        
+                            <!-- Submit button -->
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>        {% endif %}
+
+    </div>
+</div>  
+</div>
+{% endblock content %}

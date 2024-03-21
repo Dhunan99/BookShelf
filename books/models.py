@@ -40,6 +40,15 @@ class Authors(models.Model):
         # Calculate the number of works for the author and update the field
         self.number_of_works = self.books_set.count()
         self.save()
+    def sync_with_user_profile(self, user_profile):
+        """
+        Update Author model with UserProfile data
+        """
+        # Assuming user_profile is an instance of UserProfile
+        self.AuthorName=user_profile.user.username
+        self.Biography = user_profile.bio
+        self.profile_image = user_profile.profile_image
+        self.save()
 
 class Languages(models.Model):
     LanguageID = models.AutoField(primary_key=True)
@@ -134,6 +143,7 @@ class Books(models.Model):
         top_books = annotated_books[:3]
         for book in top_books:
             book.tags.add(popular_tag)
+    
 
 class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -218,7 +228,7 @@ class Report(models.Model):
 class Vote(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     book = models.ForeignKey(Books, on_delete=models.CASCADE)
-    vote_date = models.DateField(auto_now_add=True)  # Date of the vote
+    vote_date = models.DateField()  # Date of the vote
 
 
     def __str__(self):
@@ -227,3 +237,32 @@ class Vote(models.Model):
     def has_user_voted_today(cls, user):
         today = timezone.now().date()
         return cls.objects.filter(user=user, vote_date=today).exists()
+
+class Folder(models.Model):
+    name = models.CharField(max_length=255)
+    user_library = models.ForeignKey('UserLibrary', on_delete=models.CASCADE, related_name='folders')
+
+    def __str__(self):
+        return f"{self.name} (User: {self.user_library.user.username})"
+    
+class UserBook(models.Model):
+    book = models.ForeignKey('Books', on_delete=models.CASCADE)
+    folder = models.ForeignKey(Folder, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('folder', 'book')  # Enforce unique combination of user library and book
+
+    def __str__(self):
+        return f"User: {self.folder.user_library}, Book: {self.book.Title}, Folder: {self.folder.name}"
+
+class Chapter(models.Model):
+    book = models.ForeignKey(Books, on_delete=models.CASCADE)
+    chapter_number = models.PositiveIntegerField()
+    chapter_title = models.CharField(max_length=200)
+    chapter_contents = models.TextField()
+
+    class Meta:
+        unique_together = ('book', 'chapter_number')  # Ensure uniqueness of chapter number within each book
+
+    def __str__(self):
+        return f"{self.book.Title} - Chapter {self.chapter_number}: {self.chapter_title}"

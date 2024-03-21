@@ -388,6 +388,16 @@ input[type="radio"]:disabled + label {
       </div>
 <div class="custom-container">
     <div class="container mt-5 mb-4 dark-theme">
+        {% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            <div class="alert alert-danger" role="alert">
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
         
         <div class="row">
             <div class="col-md-3">
@@ -450,7 +460,7 @@ input[type="radio"]:disabled + label {
                     <!-- Bio Section -->
                     <div class="tab-pane fade" id="bio">
                         <h2>Bio</h2>
-                        <form method="post" action="{% url 'save_bio' %}" id="bio-form">x
+                        <form method="post" action="{% url 'save_bio' %}" id="bio-form">
                             {% csrf_token %}
                             <!-- Bio fields here -->
                             <input type="hidden" name="form_name" value="bio">

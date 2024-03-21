@@ -87,7 +87,6 @@ def homepage(request, book_id):
 @csrf_exempt
 def paymenthandler(request):
     if request.method == "POST":
-
         payment_id = request.POST.get('razorpay_payment_id', '')
         razorpay_order_id = request.POST.get('razorpay_order_id', '')
         signature = request.POST.get('razorpay_signature', '')

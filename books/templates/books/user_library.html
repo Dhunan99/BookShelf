@@ -1,6 +1,12 @@
 {% extends "books/book_list.html" %}
 {% block title %}<title>Library</title>{% endblock %}
 {% block content %}
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+<!-- Bootstrap CDN -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
 <style>
     /* Custom styles for the library heading */
     .library-heading {
@@ -15,6 +21,87 @@
     input#search-bar.search-bar{
         width:100%;
     }
+    /* Add this to your existing styles or style block */
+#folderModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+#folderModal .modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 24%;
+    text-align: center;
+    border-radius: 10px; /* Add border-radius for rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add box shadow for a subtle lift effect */
+}
+
+#folderModal .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#folderModal .close:hover {
+    color: black;
+}
+
+#folderModal label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+#folderModal input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#folderModal button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#folderModal button:hover {
+    background-color: #45a049;
+}
+#folder_select {
+  width: 100px;
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fff;
+}
+
+.dropdown-toggle{
+  background-color:#1a1a1a;
+}
+/* Add this to your existing styles or style block */
+.hoverblock {
+    transform: none !important; /* Remove the transform property */
+    box-shadow: none !important; /* Remove box shadow if needed */
+    /* Add other styles as needed to override the default hover behavior */
+}
+.card:hover{
+  transform: none !important;
+}
   </style>
   
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
@@ -153,6 +240,118 @@
       
       
   });
+  function openFolderPrompt() {
+    const modal = document.getElementById('folderModal');
+    modal.style.display = 'block';
+}
+
+function closeFolderModal() {
+    const modal = document.getElementById('folderModal');
+    modal.style.display = 'none';
+}
+
+function createFolder(event) {
+  const folderNameInput = document.getElementById('folderName');
+  const folderName = folderNameInput.value.trim();
+
+  if (folderName !== "") {
+    const csrftoken = document.cookie.match(/csrftoken=([^ ;]+)/)[1];
+      $.ajax({
+          type: "POST",
+          url: '{% url "create_folder" %}',  // Update with your actual URL
+          data: { folderName: folderName },
+          dataType: 'json',
+          headers: { 'X-CSRFToken': csrftoken },
+          success: function (response) {
+              if (response.success) {
+                  window.location.reload();  // Corrected: Use window.location.reload() to reload the page
+              } else {
+                  if(response.error=="Folder with the same name already exists."){
+                    alert("Folder with the same name already exists.");
+                  }
+              }
+          },
+          error: function (error) {
+              console.error("AJAX error:", error);
+          }
+      });
+
+      // Close the modal or perform other actions as needed
+  } else {
+      alert("Please enter a valid folder name.");
+  }
+}
+</script>
+
+<script>
+  function assignToFolder(bookId, folderName) {
+    const csrftoken = document.cookie.match(/csrftoken=([^ ;]+)/)[1];
+    $.ajax({
+      type: "POST",
+      url: '{% url "assign_to_folder" %}',  // Update with your actual URL
+      data: {
+        bookId: bookId,
+        folderName: folderName
+      },
+      dataType: 'json',
+      headers: { 'X-CSRFToken': csrftoken },
+      success: function (response) {
+        if (response.success) {
+          alert(`Book assigned to ${folderName === 'none' ? 'None' : folderName} successfully.`);
+          location.reload(true);
+          // You can update the UI here if needed
+        } else {
+          alert(response.error);
+        }
+      },
+      error: function (error) {
+        console.error("AJAX error:", error);
+      }
+    });
+  }
+  
+</script>
+<script>
+   document.addEventListener('DOMContentLoaded', function() {
+    var deleteFolderButton = document.getElementById('deleteFolder');
+
+    // Add a click event listener to the deleteFolder button
+    if (deleteFolderButton) {
+      deleteFolderButton.addEventListener('click', function() {
+        deleteFolder();
+      });
+    }
+    function deleteFolder() {
+    // Get the currently selected folder name
+    var selectedFolder = $('#folder_select').val();
+
+    // Confirm deletion
+    if (confirm('Are you sure you want to delete the folder "' + selectedFolder + '"?')) {
+        // Perform Ajax request to delete the folder
+        $.ajax({
+            type: 'POST',
+            url: '{% url "delete_folder" %}',  // Replace with your actual URL for deleting folders
+            data: {
+                folderName: selectedFolder,
+                csrfmiddlewaretoken: '{{ csrf_token }}'  // Include CSRF token
+            },
+            success: function (response) {
+                if (response.success) {
+                    alert('Folder deleted successfully.');
+                    // You can perform additional actions here, such as refreshing the page
+                    window.location.href = window.location.origin + window.location.pathname;
+                } else {
+                    alert('Failed to delete folder. ' + response.error);
+                }
+            },
+            error: function (error) {
+                console.error('Ajax error:', error);
+            }
+        });
+    }
+}
+   });
+  
 </script>
 <div class="container" style="min-height:293px;">
   <div class="row">
@@ -223,6 +422,9 @@
   </div>
   <div style="min-height:293px;">
     <form method="get" id="items_per_page_form">
+      {% if request.GET.folders %}
+      <input type="hidden" name="folders" value="{{ request.GET.folders }}">
+      {% endif %}
       <label for="items_per_page">Books per page:</label>
       <select name="items_per_page" id="items_per_page_select" onchange="this.form.submit()">
           <option value="2" {% if items_per_page == "2" %}selected{% endif %}>2</option>
@@ -232,8 +434,37 @@
           <option value="10" {% if items_per_page == "10" %}selected{% endif %}>10</option>
       </select>
   </form>
+  <div class="text-right mb-2">
+    <form method="get" id="folder_items">
+      {% if request.GET.items_per_page %}
+      <input type="hidden" name="items_per_page" value="{{ request.GET.items_per_page }}">
+      {% endif %}
+      <label for="folder_items">Folder:</label>
+      <select name="folders" id="folder_select" onchange="this.form.submit()">
+          <option value="all">Any</option>
+          {% for folder in folders %}
+          <option value="{{ folder.name }}" {% if folder.name == selected_folder.name %} selected {% endif %}>{{ folder.name }}</option>
+          {% endfor %}
+      </select>
+      <button type="button" id="createFolderButton" onclick="openFolderPrompt()" style="background: none;">
+    <img height="30" width="30" src="https://img.icons8.com/FFFFFF/ios/50/add-folder--v1.png" alt="add-folder--v1"/>
+</button>
+{% if selected_folder.name %}
+<button type="button" id="deleteFolder" style="background: none;">
+  <img height="30" width="30" src="https://img.icons8.com/FFFFFF/ios/50/delete-folder--v1.png" alt="add-folder--v1"/>
+</button>
+{% endif %}
+  </form>
+</div>
+  <div id="folderModal" class="modal">
+    <div class="modal-content">
+        <span class="close" style="text-align:right;" onclick="closeFolderModal()">&times;</span>
+        <label for="folderName" style="color:black;"><h5> Enter folder name:</h5></label>
+        <input type="text" id="folderName" placeholder="Folder name" required>
+        <button onclick="createFolder()">Create Folder</button>
+    </div>
+</div>
   <div class="row" style="min-height:293px;"id="search-results-container">
-    
     {% for book in books %}
       <div class="col-md-6 mb-4">
         <div class="card">
@@ -255,25 +486,45 @@
               {% endif %}
             </div>
           </div>
+          <div class="dropdown" style="position: absolute; bottom: 5px; right: 5px;">
+            <button class="btn btn-secondary dropdown-toggle cls" type="button" id="dropdownMenuButton-{{ book.BookID }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              ...
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton-{{ book.BookID }}">
+              {% if not book.folder %}
+              <a class="dropdown-item" style="background-color:grey;color:white;" href="#" onclick="assignToFolder('{{ book.BookID }}', 'none')">None</a>
+              {% else %}
+              <a class="dropdown-item" href="#" onclick="assignToFolder('{{ book.BookID }}', 'none')">None</a>
+              {% endif %}
+              {% for folder in folders %}
+              {% if book.folder ==  folder.name %}
+              <a class="dropdown-item" style="background-color:grey;color:white;" href="#" onclick="assignToFolder('{{ book.BookID }}', '{{ folder.name }}')">{{ folder.name }}</a>
+
+              {% else %}
+              <a class="dropdown-item" href="#" onclick="assignToFolder('{{ book.BookID }}', '{{ folder.name }}')">{{ folder.name }}</a>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </div>
         </div>
       </div>
     {% endfor %}
   </div>
 </div>
-  <div class="pagination">
-    <span class="step-links">
+<div class="pagination">
+  <span class="step-links">
       {% if books.has_previous %}
-      <a href="?page=1&items_per_page={{ items_per_page }}">&laquo; first</a>
-      <a href="?page={{ books.previous_page_number }}&items_per_page={{ items_per_page }}">previous</a>
-  {% endif %}
+          <a href="?page=1&items_per_page={{ items_per_page }}{% if request.GET.folders %}&folders={{ request.GET.folders }}{% endif %}">&laquo; first</a>
+          <a href="?page={{ books.previous_page_number }}&items_per_page={{ items_per_page }}{% if request.GET.folders %}&folders={{ request.GET.folders }}{% endif %}">previous</a>
+      {% endif %}
   
-  <span class="current-page">{{ books.number }}</span>
+      <span class="current-page">{{ books.number }}</span>
   
-  {% if books.has_next %}
-      <a href="?page={{ books.next_page_number }}&items_per_page={{ items_per_page }}">next</a>
-      <a href="?page={{ books.paginator.num_pages }}&items_per_page={{ items_per_page }}">last &raquo;</a>
-  {% endif %}
-    </span>
+      {% if books.has_next %}
+          <a href="?page={{ books.next_page_number }}&items_per_page={{ items_per_page }}{% if request.GET.folders %}&folders={{ request.GET.folders }}{% endif %}">next</a>
+          <a href="?page={{ books.paginator.num_pages }}&items_per_page={{ items_per_page }}{% if request.GET.folders %}&folders={{ request.GET.folders }}{% endif %}">last &raquo;</a>
+      {% endif %}
+  </span>
 </div>
 </div>
 {% endblock content %}

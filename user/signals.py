@@ -24,3 +24,11 @@ def create_user_library(sender, instance, created, **kwargs):
 def update_author_book_count(sender, instance, **kwargs):
     author = instance.Author
     author.calculate_number_of_works()
+
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+
+@receiver(pre_save, sender=Books)
+def set_default_price(sender, instance, **kwargs):
+    if instance.Price is None:
+        instance.Price = 1

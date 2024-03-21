@@ -24,3 +24,4 @@ class UserActivityMiddleware:
 
         response = self.get_response(request)
         return response
+

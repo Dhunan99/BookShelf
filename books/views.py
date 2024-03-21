@@ -21,6 +21,9 @@ from django.http import Http404
 from django.utils import timezone
 from django.db import models
 from itertools import chain
+from .models import Folder,UserBook
+from urllib.parse import urlparse
+from .models import SocialMediaLink,Chapter
 
 # Create your views here.
 def user_is_superuser(user):
@@ -400,7 +403,6 @@ def book_detail(request, book_id, form=None):
         voted=True
     else:
         voted=False
-    print(toggle)
     context={
         'book': book,
         'form': form,
@@ -586,9 +588,15 @@ from .models import UserLibrary
 def user_library(request):
     # Get the UserLibrary object for the currently logged-in user
     user_library, created = UserLibrary.objects.get_or_create(user=request.user)
-
-    # Get the books in the user's library
-    user_library_books = user_library.books.all()
+    folder=request.GET.get('folders', 'all')
+    book_ids=None
+    if folder!='all':
+        folder=Folder.objects.get(name=folder,user_library=user_library)
+        user_books_in_folder_with_books = UserBook.objects.filter(folder=folder).select_related('book').values('book').distinct()
+        book_ids = [item['book'] for item in user_books_in_folder_with_books]
+        user_library_books = user_library.books.filter(pk__in=book_ids)
+    else:
+        user_library_books = user_library.books.all()
     items_per_page = request.GET.get('items_per_page', 6)
     categories = Category.objects.all()
     paginator = Paginator(user_library_books, items_per_page)
@@ -603,16 +611,27 @@ def user_library(request):
     if user_cart:
         cart_item_count = user_cart.items.count()
     else:
-            # If the user doesn't have a cart, set item count to 0
         cart_item_count = 0
+    folders=Folder.objects.filter(user_library=user_library)
+    user_books = UserBook.objects.filter(folder__user_library=user_library)
+    for book in current_page:
+        try:
+            # Try to get the assigned folder for the book
+            assigned_folder = user_books.get(book_id=book.BookID).folder.name
+        except UserBook.DoesNotExist:
+            # Handle the case where the book is not assigned to any folder
+            assigned_folder = None
+    # Add the assigned folder name to the book object
+        book.folder = assigned_folder
     context = {
         'books': current_page,
         'categories': categories,
         'items_per_page':items_per_page,
         'cart_item_count':cart_item_count,
-
+        'folders':folders,
+        'selected_folder':folder,
+        'arranged_books':user_books,
     }
-
     return render(request, 'books/user_library.html', context)
 
 @login_required
@@ -956,7 +975,7 @@ def vote_endpoint(request,type=None):
     data = json.loads(request.body)
     book_id = data.get('book_id')
     user = request.user  
-    vote, created = Vote.objects.get_or_create(user=user, book_id=book_id, vote_date=date.today())
+    vote, created = Vote.objects.get_or_create(user=user, book_id=book_id, vote_date=timezone.now())
 
     if created:
         # Vote was successfully created
@@ -1021,3 +1040,202 @@ def ranking(request, type='alltime'):
         'type':type
     }
     return render(request, 'books/ranking.html', context)
+
+def create_folder(request):
+    if request.method == 'POST':
+        folder_name = request.POST.get('folderName')
+        user_library = UserLibrary.objects.get(user=request.user)
+
+        try:
+            # Check if a folder with the same name already exists in the user's library
+            existing_folder = Folder.objects.get(name=folder_name, user_library=user_library)
+            return JsonResponse({'success': False, 'error': 'Folder with the same name already exists.'})
+        except ObjectDoesNotExist:
+            # Create a new folder if it doesn't already exist
+            folder = Folder.objects.create(name=folder_name, user_library=user_library)
+            return JsonResponse({'success': True, 'folder_id': folder.id})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+def assign_to_folder(request):
+    book_id = request.POST.get('bookId')
+    folder_name = request.POST.get('folderName')
+
+    try:
+        book = Books.objects.get(pk=book_id)
+        lib=UserLibrary.objects.get(user=request.user)
+        user_book = UserBook.objects.filter(folder__user_library=lib,book=book).first()
+        if user_book:
+            user_book.delete()
+        if folder_name!='none':
+            folder = Folder.objects.get(name=folder_name, user_library=lib)
+            UserBook.objects.create(book=book, folder=folder)
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    
+def delete_folder(request):
+    folder_name = request.POST.get('folderName')
+
+    try:
+        folder = Folder.objects.get(name=folder_name)
+        folder.delete()
+        return JsonResponse({'success': True})
+    except Folder.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Folder not found.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    
+def writer_desk(request):
+    context={}
+    usr=request.user.userprofile
+    if not usr.is_author:
+        return render(request,'books/write.html',{'false':True})
+    author=Authors.objects.get(AuthorName=request.user.username,Biography=request.user.userprofile.bio)
+    books=Books.objects.filter(Author=author)
+    book_chapters = {
+        book.BookID: Chapter.objects.filter(book=book)
+        for book in books
+    }
+    categories=Category.objects.all()
+    languages = Languages.objects.all()
+    context['categories']=categories
+    context['languages']=languages
+    context['books']=books
+    context['social_media_links']=author.social_media_links.all()
+    context['book_chapters']=book_chapters
+    return render(request,'books/write.html',context)
+
+@login_required
+def writer_yes(request):
+    usr = request.user.userprofile
+    if not usr.is_filled():
+        messages.error(request, "Please fill out all fields in your profile before proceeding")
+        return redirect('user_profile')
+    if not usr.is_author:
+        author = Authors.objects.create(
+            AuthorName=usr.user.username,
+            Biography=usr.bio,
+            profile_image=usr.profile_image if usr.profile_image else None
+            )
+        author.save() 
+        usr.is_author = True
+        usr.save()
+    return redirect('writer_desk')
+
+@login_required
+def writer_no(request):
+    return redirect('/')
+
+@login_required
+def new_book(request):
+    if request.method == "POST":
+        # Extract data from the form submission
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        language_id = request.POST.get('language')
+        cover_image = request.FILES.get('cover_image')
+        categories = request.POST.getlist('categories')
+        cats=Category.objects.filter(id__in=categories)
+        author=Authors.objects.get(AuthorName=request.user.username,Biography=request.user.userprofile.bio)
+        if cover_image is None:
+            # Set default image path
+            default_image_path = 'book/book_cover/noimage.jpg'  # Adjust the default image path as needed
+            # Assign the default image path to cover_image
+            cover_image = default_image_path
+        # Create a new Books object
+        new_book = Books.objects.create(
+            Title=title,
+            Description=description,
+            LanguageID_id=language_id,
+            cover_image=cover_image,
+            Author=author,
+            PublicationYear=datetime.now().year
+        )
+        # Add categories to the book
+        new_book.Categories.add(*categories)
+        # Redirect to writer_desk after creating the book
+        return redirect('writer_desk')
+
+@login_required
+def set_socials(request):
+    if request.method=="POST" and request.POST.getlist('social_media_links'):
+        author=Authors.objects.get(AuthorName=request.user.username,Biography=request.user.userprofile.bio)
+        author.social_media_links.clear()
+        links=request.POST.getlist('social_media_links')
+        print(request.POST)
+        for url in links:
+        # Extract the domain from the URL
+            parsed_url = urlparse(url)
+            domain = parsed_url.netloc
+            
+            # Determine the platform based on the domain
+            if 'twitter' in domain:
+                platform = 'twitter'
+            elif 'facebook' in domain:
+                platform = 'facebook'
+            elif 'instagram' in domain:
+                platform = 'instagram'
+            else:
+                platform = 'other'
+            
+            # Get or create the SocialMediaLink instance
+            social_media_link, created = SocialMediaLink.objects.get_or_create(
+                platform=platform,
+                link=url
+            )
+            if social_media_link:
+                author.social_media_links.add(social_media_link)
+            elif created:
+                 author.social_media_links.add(social_media_link)
+    if request.method=="POST" and not request.POST.getlist('social_media_links'):
+        author=Authors.objects.get(AuthorName=request.user.username,Biography=request.user.userprofile.bio)
+        author.social_media_links.clear()
+    return redirect('writer_desk')
+
+def update_book(request):
+    if request.method == 'POST':
+        # Extract form data
+        book_id = request.POST.get('book_id')
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        cover_image = request.FILES.get('cover_image')
+        price = request.POST.get('price')
+
+        # Update book object
+        book = Books.objects.get(BookID=book_id)
+        book.Title = title
+        book.Description = description
+        if cover_image:
+            book.cover_image = cover_image
+        book.Price=price
+        book.save()
+
+        # Redirect to the appropriate page (e.g., book details page)
+        return redirect('writer_desk')
+
+def chap_upload(request):
+    if request.method == 'POST':
+        # Retrieve data from the form
+        book_id = request.POST.get('book_id')  # Assuming you have a hidden input field for book_id
+        chapter_number = request.POST.get('chapter_number')
+        chapter_title = request.POST.get('title')
+        chapter_contents = request.POST.get('editor')
+        chapter, created = Chapter.objects.get_or_create(book_id=book_id, chapter_number=chapter_number)
+        chapter.chapter_title = chapter_title
+        chapter.chapter_contents = chapter_contents
+        chapter.save()
+    return redirect('writer_desk')
+
+def fetch_chapter(request, book_id, chapter_number):
+    try:
+        chapter = Chapter.objects.get(book_id=book_id, chapter_number=chapter_number)
+        data = {
+            'title': chapter.chapter_title,
+            'content': chapter.chapter_contents
+        }
+        print(chapter.chapter_title)
+        return JsonResponse(data)
+    except Chapter.DoesNotExist:
+        return JsonResponse({'error': 'Chapter not found'}, status=404)

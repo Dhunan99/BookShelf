@@ -16,7 +16,7 @@ from django.http import JsonResponse
 import secrets
 from django.core.mail import send_mail
 from django.contrib.auth.views import PasswordChangeView
-from books.models import Books,Review
+from books.models import Books,Review,Authors
 from django.views.decorators.csrf import csrf_exempt
 from django.template.loader import render_to_string
 from django.http import HttpResponse
@@ -196,7 +196,7 @@ def validate_username(request):
 def home(request):
     if not cache.get('last_comprehensive_score_update'):
         Books.assign_tags()
-        cache.set('last_comprehensive_score_update', True, 1)
+        cache.set('last_comprehensive_score_update', True, 60*30)
     for book in Books.objects.all():
             # Loop through all reviews for the current book
             for review in Review.objects.filter(book=book):
@@ -233,6 +233,9 @@ def user_profile(request):
 @login_required
 def save_profile(request):
     if request.method == 'POST':
+        if request.user.userprofile.is_author:
+            print("IN POST")
+            author=Authors.objects.get(AuthorName=request.user.username,Biography=request.user.userprofile.bio)
         form_name = request.POST.get('form_name') 
         if form_name == 'user':
             user_form = CustomUserChangeForm(request.POST, instance=request.user)
@@ -241,7 +244,6 @@ def save_profile(request):
             form = UserProfileChangeForm(request.POST, request.FILES, instance=request.user.userprofile)
             if form.is_valid():
                 form.save()
-            return redirect('/user/profile')  # Change 'profile' to your actual profile page URL
         elif form_name == 'bio':
             allowed_fields = ('first_name', 'last_name')
             post_data = {key: request.POST[key] for key in allowed_fields}
@@ -263,6 +265,10 @@ def save_profile(request):
             form = NumberChange(post_data, instance=request.user.userprofile)
             if form.is_valid():
                 form.save()
+        if request.user.userprofile.is_author:
+            print("IN UPDATE")
+            author.sync_with_user_profile(request.user.userprofile)
+            author.save()
     
     return redirect('/user/profile')
 

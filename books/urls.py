@@ -30,6 +30,20 @@ urlpatterns = [
     path('vote/', views.vote_endpoint, name='vote_endpoint'),
     path('ranking/<str:type>/', views.ranking, name='ranking'),
     path('ranking/', views.ranking, name='ranking'),
+    path('create_folder/', views.create_folder, name='create_folder'),
+    path('assign_to_folder/', views.assign_to_folder, name='assign_to_folder'),
+    path('delete_folder/', views.delete_folder, name='delete_folder'),
+    path('writer_desk/', views.writer_desk, name='writer_desk'),
+    path('writer_desk/yes/', views.writer_yes, name='writer_yes'),
+    path('writer_desk/no/', views.writer_no, name='writer_no'),
+    path('new_book', views.new_book, name='new_book'),
+    path('set_socials', views.set_socials, name='set_socials'),
+    path('update_book/', views.update_book, name='update_book'),
+    path('chap_upload/', views.chap_upload, name='chap_upload'),
+    path('fetch_chapter/<int:book_id>/<int:chapter_number>/', views.fetch_chapter, name='fetch_chapter'),
+
+
+
 
 
 

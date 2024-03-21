@@ -33,7 +33,11 @@ class UserProfile(models.Model):
     profile_image = models.ImageField(upload_to='user/profile_images/', blank=True, null=True)
 
     def __str__(self):
-        return self.user.username
+        return self.user.username  
+    
+    def is_filled(self):
+        # Check if all fields except profile_image are filled
+        return all([self.bio, self.gender, self.dob, self.phone_number])
     
 
 class ShoppingCart(models.Model):
