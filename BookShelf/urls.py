@@ -22,6 +22,10 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('',views.redir),
     path('admin/', admin.site.urls),
+    path('contact/',views.contact,name="contact"),
+    path('contacts/',views.contacts,name="contacts"),
+    path('address_contact/', views.address_contact, name='address_contact'),
+    path('invalidate_contact/', views.invalidate_contact, name='invalidate_contact'),
     path('user/', include('user.urls')),
     path('accounts/', include('allauth.urls')),
     path('books/',include('books.urls')),

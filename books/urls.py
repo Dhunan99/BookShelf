@@ -42,10 +42,9 @@ urlpatterns = [
     path('update_book/', views.update_book, name='update_book'),
     path('chap_upload/', views.chap_upload, name='chap_upload'),
     path('fetch_chapter/<int:book_id>/<int:chapter_number>/', views.fetch_chapter, name='fetch_chapter'),
-
-
-
-
-
-
+    path('delete-book/', views.delete_book, name='delete_book'),
+    path('forum/', views.forum, name='forum'),
+    path('forum/post/<int:post_id>', views.view_post, name='view_post'),
+    path('like-post/', views.like_post, name='like_post'),
+    path('submit-reply/<int:post_id>/', views.submit_reply, name='submit_reply'),
 ]

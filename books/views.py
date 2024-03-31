@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from .forms import BookForm,CategoryForm,ReviewForm,BookFilterForm
-from .models import Authors, Languages, Books,Category,Review,Like,Report,Vote
+from .models import Authors, Languages, Books,Category,Review,Like,Report,Vote,Post,ViewPost,LikePost,Reply
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.http import require_POST
 from django.contrib import messages
@@ -1295,3 +1295,97 @@ def original_chap(request,book_id,chapter_num):
 
                 }
     return render(request,'books/read.html',context)
+
+@require_POST
+def delete_book(request):
+    book_id = request.POST.get('book_id')
+    try:
+        book = Books.objects.get(BookID=book_id, isOriginal=True) 
+        book.delete()
+        return JsonResponse({'message': 'Book deleted successfully.'})
+    except Books.DoesNotExist:
+        return JsonResponse({'error': 'Book not found or not original.'}, status=400)
+    
+def forum(request):
+    if request.method == 'POST':
+        title = request.POST.get('post_title')
+        content = request.POST.get('post_content')
+        book_id = request.POST.get('post_book')
+        # Assuming the current user is the author of the post
+        author = request.user
+        print(request.POST)
+        if title and content and book_id:
+            try:
+                book_id = int(book_id)
+                book = Books.objects.get(pk=book_id)
+                post = Post.objects.create(title=title, content=content, book=book, author=author)
+                return redirect('forum')  # Redirect to the forum home page
+            except (ValueError, Books.DoesNotExist):
+                pass  # Handle invalid book ID
+    context={}
+    books=Books.objects.all()
+    o_posts=Post.objects.filter(book__isOriginal=True)
+    p_posts=Post.objects.filter(book__isOriginal=False)
+    context['books']=books
+    context['p_posts']=p_posts
+    context['o_posts']=o_posts
+    return render(request,'books/forum.html',context)
+
+def view_post(request, post_id):
+    context = {}
+    post = Post.objects.get(pk=post_id)
+    context['post'] = post
+    
+    # Get or create ViewPost instance
+    view_post, created = ViewPost.objects.get_or_create(user=request.user, post=post)
+    if created:
+        post.calculate_count()
+
+    # Check if the post is liked by the user
+    try:
+        liked_post = LikePost.objects.get(user=request.user, post=post)
+        context['liked'] = True
+    except LikePost.DoesNotExist:
+        context['liked'] = False    
+
+    # Get replies associated with the post
+    replies = Reply.objects.filter(post=post)
+    context['replies'] = replies
+    profile_image_urls = {}
+
+    for reply in replies:
+        user=reply.user
+        user_profile = UserProfile.objects.get(user=user)
+        profile_image_urls[user.username] = user_profile.profile_image.url if user_profile.profile_image else None
+    context['profile_image_urls']=profile_image_urls
+    return render(request, 'books/post_details.html', context)
+
+def like_post(request):
+    if request.method == 'POST':
+        post_id = request.POST.get('post_id')
+        user = request.user
+        
+        # Check if LikePost object already exists
+        try:
+            like_post = LikePost.objects.get(post_id=post_id, user=user)
+            like_post.delete()  # If exists, delete it
+        except LikePost.DoesNotExist:
+            LikePost.objects.create(post_id=post_id, user=user)  # If not exists, create it
+        
+        # Recalculate LikePosts count for the post
+        post = Post.objects.get(pk=post_id)
+        post.likes = LikePost.objects.filter(post=post).count()
+        post.save()
+
+        return JsonResponse({'success': True,'like_count':post.likes})
+    else:
+        return JsonResponse({'success': False})
+    
+def submit_reply(request, post_id):
+    if request.method == 'POST':
+        post = get_object_or_404(Post, id=post_id)
+        reply_content = request.POST.get('reply_content')
+        if reply_content:
+            Reply.objects.create(post=post, user=request.user, content=reply_content)
+            # You may want to add additional logic here, such as updating the last activity of the post
+            return redirect('view_post', post_id=post_id)  # Redirect to the post detail page

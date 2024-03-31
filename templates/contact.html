@@ -1,0 +1,69 @@
+{% extends 'user/home.html' %}
+{% block title %}
+    <title>Contact Us</title>
+{% endblock %}
+
+{% block style %}
+    <style>
+        .contact-container {
+            margin: 50px auto;
+            width: 80%;
+            background-color: #333;
+            color: #fff; /* Text color */
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .contact-form {
+            margin-bottom: 20px;
+        }
+
+        .contact-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            background-color: #444; /* Input background color */
+            color: #fff; /* Input text color */
+        }
+
+        .contact-submit {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        .contact-submit:hover {
+            background-color: #0056b3;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="contact-container">
+        {% if success %}
+            <div style="background-color: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
+                Thank you for contacting us. Our admin will address the issue as soon as possible.
+            </div>
+        {% endif %}
+        <h2>Contact Us</h2>
+        <p>Please fill out the form below to get in touch with us.</p>
+        <form class="contact-form" method="post" action="{% url 'contact' %}">
+            {% csrf_token %}
+            <input type="text" class="contact-input" name="reason" placeholder="Reason for contact" required>
+            <textarea class="contact-input" name="message" placeholder="Please explain the situation in depth" rows="4" required></textarea>
+            <pre style="color:white;text-align:right;">
+                You can also contact via the following E-mail. However, response times may vary.
+                E-mail:authbookshelf@gmail.com
+            </pre>
+            <button type="submit" class="contact-submit">Submit</button>
+
+        </form>
+    </div>
+{% endblock %}

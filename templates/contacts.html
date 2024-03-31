@@ -1,0 +1,123 @@
+{% extends "books/book_list.html" %}
+{% block title %}<title>Contacts</title>{% endblock %}
+{% block content %}
+<style>
+    <style>
+        body {
+            background-color: #1e1e1e; /* Dark background color */
+            color: #fff; /* Light text color for better readability */
+            text-align: center; /* Center-align content */
+        }
+    
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #a4a4a4;
+            text-transform: uppercase;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            padding-top:10px;
+            margin-left: 20px;
+        }
+        
+    
+        .table-container {
+            overflow-x: auto; /* Add horizontal scroll for small screens */
+        }
+    
+        .reason {
+            max-width: 300px;
+            overflow: hidden;
+            white-space: nowrap;
+            color: #fff;
+            cursor: pointer;
+            user-select: none;
+        }
+    
+        /* Expand the reason content when the "expanded" class is present */
+        .reason.expanded {
+            overflow: auto;
+            white-space: pre-wrap;
+            max-height: none;
+        }
+    
+</style>
+<script>
+function toggleReasonExpansion(reasonElement) {
+    reasonElement.classList.toggle("expanded");
+}
+function addressedContact(contactId) {
+    $.ajax({
+        url: '/address_contact/',
+        type: 'POST',
+        data: {
+            'contact_id': contactId,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            // Handle success response, if needed
+            // For example, you can update the UI to reflect that the contact has been addressed
+            alert('Contact addressed successfully');
+            location.reload();
+        },
+        error: function(xhr, status, error) {
+            // Handle error response, if needed
+            console.error(xhr.responseText);
+        }
+    });
+}
+
+function deleteContact(contactId) {
+    $.ajax({
+        url: '/invalidate_contact/',
+        type: 'POST',
+        data: {
+            'contact_id': contactId,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            // Handle success response, if needed
+            // For example, you can remove the contact from the UI
+            alert('Contact invalidated successfully');
+            location.reload();
+        },
+        error: function(xhr, status, error) {
+            // Handle error response, if needed
+            console.error(xhr.responseText);
+        }
+    });
+}
+
+</script>
+
+<div class="container table-container" style="min-height:450px;">
+    <div class="breadcrumb">
+        <a href="/admin">Admin</a> /
+        <a href="">Contacts</a>
+      </div>
+    <h1>Reports</h1>
+    <table class="table table-dark table-striped">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Concern</th>
+                <th>Detail</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for contact in contacts %}
+            <tr>
+                <td>{{ contact.user.username }}</td>
+                <td>{{ contact.reason }}</td>
+                <td class="reason" onclick="toggleReasonExpansion(this)">{{ contact.message  }}</td>
+                <td>
+                    <button onclick="addressedContact({{ contact.id }})" class="btn btn-primary">Addressed</button>
+                    <button onclick="deleteContact({{ contact.id }})" class="btn btn-danger">Invalidate</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

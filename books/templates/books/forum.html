@@ -1,0 +1,355 @@
+{% extends 'user/home.html' %}
+{% block title %}
+    <title>Forum</title>
+{% endblock %}
+
+{% load static %}   
+
+{% block style %}
+    <style>
+        .container2 {
+            position: relative;
+            margin: 25vh;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #252525;
+            border-radius: 10px;
+        }
+        .dark-input {
+            background-color: #333 !important;
+            color: #fff !important;
+            border-color: #777 !important;
+        }
+        
+        .breadcrumb a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .create-post-btn {
+            position: absolute;
+            top: 10vh;
+            right: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .create-post-btn:hover {
+            background-color: #0056b3;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        .modal-content {
+            background-color: #333;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .post-form textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #777;
+            background-color: #222;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .post-form button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        .post-form button:hover {
+            background-color: #0056b3;
+        }
+        .forum-section {
+            margin-top: 20px;
+            width: 100%;
+        }
+        .forum-section h3 {
+            color: #5996d7;
+            margin-bottom: 10px;
+        }
+        .forum-post {
+            background-color: #444;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .forum-post h3 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .forum-post p {
+            color: #ccc;
+        }
+        .no-posts {
+            color: #ccc;
+            font-style: italic;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container2 {
+                margin: 10vh;
+            }
+            .create-post-btn {
+                position: static;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+        }
+        /* Add this to your CSS file or <style> block */
+            .table {
+                color: #fff; /* Text color */
+            }
+            
+            .table th,
+            .table td {
+                border-color: #777; /* Border color */
+            }
+            
+            .table thead th {
+                background-color: #333; /* Header background color */
+            }
+            
+            .table-striped tbody tr:nth-of-type(odd) {
+                background-color: #444; /* Odd row background color */
+            }
+            
+            .table-striped tbody tr:nth-of-type(even) {
+                background-color: #333; /* Even row background color */
+            }
+            
+            .table-striped tbody tr:hover {
+                background-color: #555; /* Hover background color */
+            }
+            .title-column {
+                width: 50%; /* Adjust the width as needed */
+            }
+        .breadcrumb{
+            border: 0.001em solid #3b3b3b;
+        }
+        a.link{
+            color: #a794ff; 
+            text-decoration: none; /* Remove default underline */
+            transition: color 0.3s; /* Smooth transition for color change */
+        }
+        
+        a.link:hover {
+            color: #00bdff; 
+            text-decoration: underline; /* Add underline on hover */
+        }
+        
+    </style>
+    <script>
+    // Wait for the DOM to fully load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all elements containing timestamps
+        var timestamps = document.querySelectorAll('.last-activity');
+
+        // Convert each timestamp to the user's local time
+        timestamps.forEach(function(timestamp) {
+            // Get the timestamp value
+            var timestampValue = parseInt(timestamp.textContent.trim()) * 1000; // Convert to milliseconds
+            // Convert Unix timestamp to local time
+            var localTime = new Date(timestampValue).toLocaleString();
+
+            // Update the element with the local time
+            timestamp.textContent = localTime;
+        });
+    });
+</script>
+
+    
+{% endblock style %}
+
+{% block content %}
+    <div class="container2">
+        <div class="breadcrumb">
+            <a href="/">Home</a> /
+            <a href="">Forum</a>
+        </div>
+
+        <!-- Button to Open the Modal -->
+        <button class="create-post-btn" onclick="openModal()">Create New Post</button>
+
+        <!-- Modal for Creating New Post -->
+        <!-- Modal for Creating New Post -->
+       <!-- Modal for Creating New Post -->
+<div id="myModal" class="modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title text-light">Create New Post</h5>
+                <button type="button" class="close text-light" onclick="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="post" class="post-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="post_book" class="text-light">Select Book to Post under:</label>
+                        <select id="post_book" name="post_book" class="form-control dark-input" required>
+                            <option value="">Select a book...</option> <!-- Initial empty option -->
+                            {% for book in books %}
+                                <option value="{{ book.BookID }}">{{ book.Title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="post_title" class="text-light">Title:</label>
+                        <input type="text" id="post_title" name="post_title" class="form-control dark-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="post_content" class="text-light">Content:</label>
+                        <textarea id="post_content" name="post_content" class="form-control dark-input" rows="5" placeholder="Write your post here" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Post</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+        <!-- Display Announcements -->
+        <div class="forum-section">
+            <h3>Announcements</h3>
+            {% for post in announcements %}
+                <div class="forum-post">
+                    <h3>{{ post.title }}</h3>
+                    <p>{{ post.content }}</p>
+                </div>
+            {% empty %}
+                <p class="no-posts">No announcements available.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Display Posts for Published Books -->
+        <div class="forum-section">
+            <h3>Discuss Published Works</h3>
+            {% if p_posts %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Views</th>
+                            <th>Likes</th>
+                            <th>Replies</th>
+                            <th>Last Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in p_posts %}
+                            <tr>
+                                <td class="title-column" colspan="1"><a class="link" href="post/{{post.pk}}">{{ post.title }}</a></td>
+                                <td>{{ post.views }}</td>
+                                <td>{{ post.likes }}</td>
+                                <td>{{ post.replies }}</td>
+                                <td class="last-activity">{{ post.last_activity|date:"U" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-posts">No posts available for published books.</p>
+            {% endif %}
+        </div>
+        
+        
+
+        <!-- Display Posts for Original Books -->
+        <div class="forum-section">
+            <h3>Discuss Original Works</h3>
+            {% if o_posts %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Views</th>
+                            <th>Likes</th>
+                            <th>Replies</th>
+                            <th>Last Activity</th>  
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in o_posts %}
+                            <tr>
+                                <td class="title-column" colspan="1"><a class="link" href="post/{{post.pk}}">{{ post.title }}</a></td>
+                                <td>{{ post.views }}</td>
+                                <td>{{ post.likes }}</td>
+                                <td>{{ post.replies }}</td>
+                                <td class="last-activity">{{ post.last_activity|date:"U" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-posts">No posts available for published books.</p>
+            {% endif %}
+        </div>
+    </div>   
+
+    <script>
+        // Get the modal
+        var modal = document.getElementById("myModal");
+
+        // Get the button that opens the modal
+        var btn = document.querySelector(".create-post-btn");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks the button, open the modal
+        function openModal() {
+            modal.style.display = "block";
+        }
+
+        // When the user clicks on <span> (x), close the modal
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+{% endblock content %}

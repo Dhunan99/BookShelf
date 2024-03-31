@@ -53,6 +53,7 @@ class CustomPasswordResetView(PasswordResetView):
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'user/password_reset_done.html'  # Your template for password reset done page
     
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def login(request):
     error_message=""
     if request.user.is_authenticated:

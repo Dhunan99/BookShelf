@@ -267,3 +267,64 @@ class Chapter(models.Model):
 
     def __str__(self):
         return f"{self.book.Title} - Chapter {self.chapter_number}: {self.chapter_title}"
+    
+class Post(models.Model):
+    book = models.ForeignKey(Books, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    likes = models.PositiveIntegerField(default=0)
+    views = models.PositiveIntegerField(default=0)
+    replies = models.PositiveIntegerField(default=0)
+    last_activity = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+    def calculate_count(self):
+        self.views = self.viewpost_set.count()
+        self.save()
+    def update_last_activity(self):
+        self.last_activity = timezone.now()
+        self.save()
+    
+class LikePost(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('post', 'user')
+        
+    def save(self, *args, **kwargs):
+        self.post.update_last_activity()
+        super().save(*args, **kwargs)
+
+class ViewPost(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('post', 'user')
+    
+    def save(self, *args, **kwargs):
+        self.post.update_last_activity()
+        super().save(*args, **kwargs)
+        
+class Reply(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        self.post.update_last_activity()
+        super().save(*args, **kwargs)
+
+class Contact(models.Model):
+    reason = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    addressed = models.BooleanField(default=False)  # New field
+
+    def __str__(self):
+        return f"{self.reason} - {self.created_at}"

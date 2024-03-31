@@ -9,6 +9,9 @@ from datetime import timedelta
 from django.db.models import F, ExpressionWrapper, fields
 from django.utils import timezone
 from datetime import date
+from books.models import Contact
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
 
 def redir(request):
     if request.user.is_authenticated:
@@ -82,3 +85,37 @@ def stats(request):
         'average_age':average_age
     }
     return render(request,'stats.html',context)
+
+def contact(request):
+    if request.method == 'POST':
+        reason = request.POST.get('reason')
+        message = request.POST.get('message')
+        Contact.objects.create(reason=reason, message=message,user=request.user)
+        return render(request,'contact.html',{'success':True})
+    return render(request,'contact.html')
+
+@user_passes_test(user_is_superuser)
+def contacts(request):
+    contacts=Contact.objects.filter(addressed=False)
+    return render(request,'contacts.html',{'contacts':contacts})
+
+@require_POST
+def address_contact(request):
+    contact_id = request.POST.get('contact_id')
+    try:
+        contact = Contact.objects.get(id=contact_id)
+        contact.addressed = True
+        contact.save()
+        return JsonResponse({'success': True})
+    except Contact.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Contact not found'})
+
+@require_POST
+def invalidate_contact(request):
+    contact_id = request.POST.get('contact_id')
+    try:
+        contact = Contact.objects.get(id=contact_id)
+        contact.delete()
+        return JsonResponse({'success': True})
+    except Contact.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Contact not found'})

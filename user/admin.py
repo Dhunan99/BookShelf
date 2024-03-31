@@ -1,7 +1,7 @@
 # Register your models here.
 from django.contrib import admin
 from .models import UserProfile,ShoppingCart,PurchaseHistory,UserActivity,Message,ReadingProgress
-from books.models import Vote
+from books.models import Vote,Post
 
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'phone_number', 'gender', 'dob')
@@ -16,5 +16,6 @@ admin.site.register(UserActivity)
 admin.site.register(Message)
 admin.site.register(ReadingProgress)
 admin.site.register(Vote)
+admin.site.register(Post)
 
 

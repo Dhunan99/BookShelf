@@ -119,6 +119,32 @@ input[type="radio"] + label {
     }
 </style>
 <script>
+    function validateLinks() {
+        // Get all input fields within the social-links-container div
+        const inputs = document.querySelectorAll('#social-links-container input[type="text"]');
+        
+        // Regular expression to match the link format (assuming a basic URL pattern)
+        const urlRegex = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+)\.([a-zA-Z]{2,})(\/\S*)?$/;
+    
+        // Check each input field
+        for (let input of inputs) {
+            if (!urlRegex.test(input.value)) {
+                alert('Please enter valid URLs in all input fields.');
+                return false; // Prevent form submission
+            }
+        }
+    
+        return true; // Allow form submission
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        // Intercept form submission
+        const form = document.querySelector('#create-new-socials');
+        form.addEventListener('submit', function(event) {
+            if (!validateLinks()) {
+                event.preventDefault(); // Prevent form submission if validation fails
+            }
+        });
+    });
     document.addEventListener('DOMContentLoaded', function() {
         // Function to add a new social media link input field
         function addSocialLink() {
@@ -212,6 +238,15 @@ input[type="radio"] + label {
         
         // Show the div for editing chapters
         document.getElementById(`chaptersDiv_${bookID}`).style.display = 'block';
+        
+        // Add your logic to populate and edit chapters in the chaptersDiv
+    }
+       function returnTo(bookID) {
+        // Hide the current form
+        document.getElementById(`editForm_${bookID}`).style.display = 'block';
+        
+        // Show the div for editing chapters
+        document.getElementById(`chaptersDiv_${bookID}`).style.display = 'none';
         
         // Add your logic to populate and edit chapters in the chaptersDiv
     }
@@ -341,10 +376,93 @@ function updateChapter(button) {
         .catch(error => console.error('Error:', error));
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    // Select all forms with the class "upload-chap-form"
+    const forms = document.querySelectorAll('.upload-chap-form');
+    
+    // Add event listener to each form
+    forms.forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            // Find the title and editor fields within the same parent
+            const titleField = form.querySelector('.title');
+            const editorField = form.querySelector('.ck-editor__editable');
+            
+            // Check if title and editor are empty
+            if (titleField.value.trim() === '' || editorField.textContent.trim() === '') {
+                // Prevent form submission
+                event.preventDefault();
+                
+                // Show alert
+                alert('Title and contents cannot be empty.');
+            }
+        });
+    });
+});
 
 </script>
-
-
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select the form with the ID "create-new-form"
+        const form = document.getElementById('create-new-form');
+    
+        // Add event listener to form submission
+        form.addEventListener('submit', function(event) {
+            // Select all checkboxes with name "categories"
+            const checkboxes = document.querySelectorAll('input[name="categories"]:checked');
+    
+            // Check if at least one checkbox is checked
+            if (checkboxes.length === 0) {
+                // Prevent form submission
+                event.preventDefault();
+    
+                // Show alert
+                alert('Please select at least one category.');
+            }
+        });
+    });
+    </script>
+    
+    <script>
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        function deleteBook(bookID) {
+            // Confirm deletion
+            if (confirm('Are you sure you want to delete this book?')) {
+                var csrftoken = getCookie('csrftoken');
+                // Send AJAX request
+                $.ajax({
+                    url: '/books/delete-book/', // URL to your Django view
+                    type: 'POST',
+                    headers: {'X-CSRFToken': csrftoken},
+                    data: {
+                        'book_id': bookID
+                    },
+                    success: function(response) {
+                        // Refresh the page
+                        location.reload();
+                    },
+                    error: function(xhr, errmsg, err) {
+                        console.log(errmsg);
+                        // Handle error if needed
+                    }
+                });
+            }
+        }
+        </script>
+        
 
 
 {% endblock style %}
@@ -383,7 +501,7 @@ function updateChapter(button) {
                 <div class="tab-content dark-theme">
                     <div class="tab-pane show active" id="about">
                         <h2>Socials</h2>
-                        <form method="post" action="{% url 'set_socials' %}" id="create-new-form" enctype="multipart/form-data">
+                        <form method="post" action="{% url 'set_socials' %}" id="create-new-socials" enctype="multipart/form-data">
                             {% csrf_token %}
                             <!-- Social Media Links -->
                            <!-- Social Media Links -->
@@ -415,6 +533,7 @@ function updateChapter(button) {
         <!-- Form for editing book details -->
         <form id="editForm_{{ book.BookID }}" action="{% url 'update_book' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
+
             <input type="hidden" name="book_id" value="{{ book.BookID }}">
             <!-- Image -->
             <div class="d-flex justify-content-center align-items-center">
@@ -430,15 +549,15 @@ function updateChapter(button) {
             </div>
             <div class="form-group">
                 <label for="title">Title:</label>
-                <input type="text" id="title_{{ book.BookID }}" name="title" class="form-control" value="{{ book.Title }}" disabled>
+                <input type="text" id="title_{{ book.BookID }}" name="title" class="form-control" value="{{ book.Title }}" disabled required>
             </div>
             <div class="form-group">
                 <label for="description">Description:</label>
-                <textarea id="description_{{ book.BookID }}" name="description" class="form-control" rows="5" disabled>{{ book.Description }}</textarea>
+                <textarea id="description_{{ book.BookID }}" name="description" class="form-control" rows="5" disabled required>{{ book.Description }}</textarea>
             </div>
             <div class="form-group">
                 <label for="price">Price:</label>
-                <input type="number" id="price_{{ book.BookID }}" name="price" class="form-control" value="{{ book.Price }}" disabled>
+                <input type="number" id="price_{{ book.BookID }}" name="price" onchange="checkPrice(this)" class="form-control" value="{{ book.Price }}" disabled required>
             </div>
             
             <!-- Edit and save buttons -->
@@ -446,12 +565,13 @@ function updateChapter(button) {
             <button type="button" class="btn btn-success save-button" onclick="cancelChanges('{{ book.BookID }}')" style="display: none;">Cancel</button>
             <button type="submit" style="margin-top:2px;" class="btn btn-success save-button" id="sub_{{book.BookID}}" class="form-control" disabled>Submit</button>
             <button type="button" class="btn btn-secondary edit-chapters-button" style="margin-top:4px; float: right;" onclick="editChapters('{{ book.BookID }}')">Edit Chapters</button>
-
+            <button type="button" class="btn btn-danger delete-chapters-button" style="margin-top:4px;margin-right:10px; float: right;" onclick="deleteBook('{{ book.BookID }}')">Delete Book</button>
         </form>
 
         <div id="chaptersDiv_{{ book.BookID }}" style="display: none; height: 500px;">
             <form method="post" class="upload-chap-form" action="{% url 'chap_upload' %}" enctype="multipart/form-data">
         {% csrf_token %}
+
         <input type="hidden" name="book_id" class="book-id" value="{{ book.BookID }}">
     
         <div id="chapterButtons_{{ book.BookID }}" style="margin-bottom: 10px;">
@@ -473,7 +593,9 @@ function updateChapter(button) {
         
         <div style="color:black;margin-bottom:5px;" id="text_{{ book.BookID }}">
             <textarea id="editor_{{ book.BookID }}" name="editor" style="width: 100%; height: calc(100% - 40px);" class="ck-transform"></textarea>
-        </div>  
+        </div> 
+        <button type="button" class="btn btn-success" onclick="returnTo('{{ book.BookID }}')"><i class="fa fa-arrow-left" aria-hidden="true"></i>
+        </button> 
         <input type="submit" class="btn btn-primary" value="Save">
     </form> 
         </div>
@@ -498,7 +620,7 @@ function updateChapter(button) {
                             <div class="form-group mb-4">
                                 <label>Categories:</label><br>
                                 {% for category in categories %}
-                                <div class="form-check form-check-inline">
+                                <div class="form-check form-check-inline" id="categories_select">
                                     <input type="checkbox" name="categories" id="category{{ category.id }}" value="{{ category.id }}" class="form-check-input">
                                     <label for="category{{ category.id }}" class="form-check-label">{{ category.name }}</label>
                                 </div>

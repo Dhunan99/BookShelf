@@ -79,3 +79,4 @@ class BookFilterForm(forms.Form):
         label='Minimum Rating Value',
         required=False
     )
+    

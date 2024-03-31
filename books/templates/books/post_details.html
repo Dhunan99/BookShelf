@@ -1,0 +1,284 @@
+{% extends 'user/home.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}
+    <title>{{ post.title }}</title>
+{% endblock %}
+
+{% block style %}
+    <style>
+        textarea.reply-input{
+            height:16vh;
+        }
+        .post-container {
+            margin: 50px auto;
+            width: 80%;
+            background-color: #333;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative; /* Add position relative */
+        }
+
+        .post-title {
+            border-bottom: 1px solid #7c7c7c;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .post-content {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .reply-btn,
+        .submit-reply-btn {
+            background-color: #0079d3;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .reply-box {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+
+        .reply-input {
+            width: calc(100% - 70px);
+            padding: 5px;
+            border: 1px solid #777;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #444;
+            color: #fff;
+        }
+
+        .submit-reply-btn {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .like-btn {
+            font-size: 18px;
+            background-color: transparent;
+            border: 1px solid white;
+            color: #4bff00;
+            cursor: pointer;
+        }
+
+        .liked {
+            background-color: #4bff00;
+            color: black;
+        }
+        .breadcrumb{
+            background-color:#242427;
+            border: 0.001em solid #3b3b3b;
+        }
+        .stats {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            color: #ccc;
+            font-size: 14px;
+        }
+        .post-contents{
+            position:relative;
+        }
+        #link-1{
+            color: #a794ff; 
+            text-decoration: none; /* Remove default underline */
+            transition: color 0.3s; /* Smooth transition for color change */
+        }
+        
+        #link-1:hover {
+            color: #00bdff; 
+            text-decoration: underline; /* Add underline on hover */
+        }
+        
+        .reply-container {
+            display: flex;
+            align-items: center;
+    margin-bottom: 20px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+        }
+        
+        .user-profile {
+            text-align: center;
+            flex: 0 0 auto; /* Fix size of user profile section */
+            margin-right: 20px;
+            border-right: 1px solid #ccc; /* Add vertical line */
+            padding-right: 20px; /* Add padding to separate content from the line */
+        }
+        
+        
+        .user-profile img {
+            border: 1px solid #555;
+
+            max-width: auto; /* Adjust image width as needed */
+            height: 100px;
+            border-radius: 50%; /* Make the image circular */
+        }
+        
+        .user-info {
+            margin-top: 5px; /* Add spacing between username and timestamp */
+        }
+        
+        .reply-content {
+            flex-grow: 1; /* Expand to fill remaining space */
+        }
+        
+        .timestamp {
+            color: #aaa; /* Faded color */
+            font-size: 12px; /* Adjust font size as needed */
+        }
+        
+        
+        .timestamp {
+            color: #aaa; /* Faded color */
+            font-size: 12px; /* Adjust font size as needed */
+        }
+        .vertical-line {
+            border-left: 1px solid #ccc;
+            height: 100%;
+            margin: 0 20px; /* Adjust margin as needed */
+        }
+        
+    </style>
+    <script>
+        function toggleLike(btn, postId) {
+            $.ajax({
+                url: "{% url 'like_post' %}",
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                    'post_id': postId
+                },
+                success: function(response) {
+                    btn.classList.toggle('liked');
+                    // Update like count
+                    $('#like-count').text(response.like_count);
+                }
+            });
+        }
+    </script>
+    <script>
+        // Wait for the DOM to fully load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the last activity timestamp
+            var lastActivityTimestamp = '{{ post.last_activity|date:"U" }}';
+    
+            // Convert UTC timestamp to local time
+            var lastActivityLocalTime = new Date(parseInt(lastActivityTimestamp) * 1000).toLocaleString();
+    
+            // Update the last activity element with the local time
+            document.getElementById('last-activity').textContent = lastActivityLocalTime;
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all elements with the class 'timestamp'
+            var timestamps = document.getElementsByClassName('timestamp');
+    
+            // Loop through each timestamp element
+            for (var i = 0; i < timestamps.length; i++) {
+                var timestampElement = timestamps[i];
+                var timestampValue = timestampElement.textContent; // Get the UTC timestamp value
+    
+                // Convert UTC timestamp to local time
+                var localTime = new Date(parseInt(timestampValue) * 1000).toLocaleString();
+    
+                // Update the timestamp element with the local time
+                timestampElement.textContent = localTime;
+            }
+        });
+    </script>
+    
+    
+{% endblock style %}
+
+{% block content %}
+
+    <div class="post-container">
+        <div class="breadcrumb">
+            <a href="/">Home</a> /
+            <a href="/books/forum/">Forum</a> /
+            <a href="">Post</a>
+        </div>
+        <div class="post-contents">
+        <h2 class="post-title">{{ post.title }}</h2>
+        <h6 style="border-bottom:1px solid #474747;">Discussion on: <a id="link-1" href="/books/book/{{post.book.BookID}}">{{ post.book }}</a></h6> 
+
+        <p class="post-content">
+            {{ post.content|linebreaks }}
+        </p>
+        <div style="text-align: left">
+            <button class="like-btn {% if liked %}liked{% endif %}" onclick="toggleLike(this, '{{ post.id }}')"><i class="fa-solid fa-arrow-up"></i></button>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats">
+            Likes: <span id="like-count">{{ post.likes }}</span> | Views: {{ post.views }} | Replies: {{ post.replies }} | Last Activity: <span id="last-activity"></span>
+        </div>
+    </div>
+        <!-- Reply box -->
+        <div class="reply-box">
+            <form method="post" action="{% url 'submit_reply' post.id %}">
+                {% csrf_token %}
+                <textarea class="reply-input" name="reply_content" placeholder="Write a reply..." required></textarea>
+                <div style="text-align: right">
+                    <button type="submit" class="submit-reply-btn">Reply</button>
+                </div>
+            </form>
+        </div>
+<br>
+        <div class="replies">
+            <h3 style="text-align:center;color:#e100e1;">Replies</h3>
+
+            {% if replies %}
+                    {% for reply in replies %}
+    <hr style="background-color: rgb(255 255 255 / 11%);"> <!-- Adjust the alpha value for desired translucency -->
+    <div class="reply-container">
+        <div class="user-profile">
+            <!-- Display user profile image -->
+            <a href="/user/user_view/{{reply.user.username}}">
+                <img src="{{profile_image_urls|get_item:reply.user.username}}" alt="Profile Image">
+            </a>
+            <div class="user-info">
+                <!-- Display username -->
+                <p>{{ reply.user.username }}</p>
+                <!-- Display timestamp -->
+                <p class="timestamp">{{ reply.created_at|date:"U" }}</p>
+            </div>
+        </div>
+        <!-- Add vertical line -->
+        <div class="vertical-line"></div>
+        <div class="reply-content">
+            <!-- Display reply content -->
+            <p>{{ reply.content }}</p>
+        </div>
+    </div>
+{% endfor %}
+
+            {% else %}
+                <p style="text-align:center;font-size:22px;">No replies yet. Be the first!</p>
+            {% endif %}
+        </div>
+        
+        
+    </div>
+
+{% endblock content %}

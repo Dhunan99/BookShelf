@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Books,Category,Authors,Languages,Identifier,Tag,Review,Like,UserLibrary,SocialMediaLink,Notification,NotificationType,Report,Folder,UserBook,Chapter
+from .models import Books,Category,Authors,Languages,Identifier,Tag,Review,Like,UserLibrary,SocialMediaLink,Notification,NotificationType,Report,Folder,UserBook,Chapter,LikePost,ViewPost,Reply,Contact
 # Register your models here.
 admin.site.register(Books)
 admin.site.register(Category)
@@ -16,6 +16,13 @@ admin.site.register(Report)
 admin.site.register(Folder)
 admin.site.register(UserBook)
 admin.site.register(Chapter)
+admin.site.register(LikePost)
+admin.site.register(ViewPost)
+admin.site.register(Reply)
+admin.site.register(Contact)
+
+
+
 
 
 
