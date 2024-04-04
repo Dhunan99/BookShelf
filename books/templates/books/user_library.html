@@ -1,4 +1,5 @@
 {% extends "books/book_list.html" %}
+{% load static %}
 {% block title %}<title>Library</title>{% endblock %}
 {% block content %}
 
@@ -451,7 +452,7 @@ function createFolder(event) {
 </button>
 {% if selected_folder.name %}
 <button type="button" id="deleteFolder" style="background: none;">
-  <img height="30" width="30" src="https://img.icons8.com/FFFFFF/ios/50/delete-folder--v1.png" alt="add-folder--v1"/>
+  <img height="30" width="30" src="{% static 'img/img.png' %}" alt="add-folder--v1"/>
 </button>
 {% endif %}
   </form>

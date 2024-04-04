@@ -108,7 +108,11 @@ def paymenthandler(request):
             order = Order.objects.get(razorpay_order_id=razorpay_order_id)
 
             # Check if all the books in the order are in the user's cart
-            user_cart = ShoppingCart.objects.get(user=request.user)
+            try:
+                user_cart = ShoppingCart.objects.get(user=request.user)
+            except ShoppingCart.DoesNotExist:
+                user_cart = ShoppingCart.objects.create(user=request.user)
+
             book_ids = order.items.values_list('BookID', flat=True)
 
             if len(book_ids) >1:

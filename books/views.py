@@ -1099,9 +1099,9 @@ def assign_to_folder(request):
     
 def delete_folder(request):
     folder_name = request.POST.get('folderName')
-
+    user_library=UserLibrary.objects.get(user=request.user)
     try:
-        folder = Folder.objects.get(name=folder_name)
+        folder = Folder.objects.get(name=folder_name,user_library=user_library)
         folder.delete()
         return JsonResponse({'success': True})
     except Folder.DoesNotExist:
